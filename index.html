@@ -27,6 +27,15 @@
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-in { animation: fadeIn 0.4s ease-out; }
+        
+        /* Shake Animation for Wrong Password */
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 
+            10%, 90% { transform: translate3d(-1px, 0, 0); } 
+            20%, 80% { transform: translate3d(2px, 0, 0); } 
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 
+            40%, 60% { transform: translate3d(4px, 0, 0); } 
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -57,6 +66,7 @@
         const TrendingUp = (p) => <Icon {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></Icon>;
         const TrendingDown = (p) => <Icon {...p}><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></Icon>;
         const Filter = (p) => <Icon {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></Icon>;
+        const Lock = (p) => <Icon {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Icon>;
 
         // --- Default Data ---
         const DEFAULT_INCOME = ["Sales / Revenue", "Services", "Commission", "Consulting", "Other Income"];
@@ -69,6 +79,53 @@
         const Badge = ({ children, type }) => {
             const styles = { income: "bg-emerald-100 text-emerald-800", expense: "bg-rose-100 text-rose-800", neutral: "bg-slate-100 text-slate-700", pending: "bg-amber-100 text-amber-800", paid: "bg-emerald-50 text-emerald-700" };
             return <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${styles[type] || styles.neutral}`}>{children}</span>;
+        };
+
+        // --- Login Screen ---
+        const LoginScreen = ({ onLogin }) => {
+            const [password, setPassword] = useState("");
+            const [error, setError] = useState(false);
+
+            const handleSubmit = (e) => { 
+                e.preventDefault(); 
+                // Hardcoded password check
+                if (password === "S/i5i5i5") {
+                    onLogin(); 
+                } else { 
+                    setError(true); 
+                    setPassword(""); 
+                    setTimeout(() => setError(false), 500); 
+                } 
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+                    <Card className={`w-full max-w-sm p-8 text-center space-y-6 ${error ? 'shake' : ''}`}>
+                        <div className="bg-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-indigo-200">
+                            <Lock size={32} className="text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Secure Access</h2>
+                            <p className="text-sm text-slate-500 mt-1">Business Manager</p>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="text-left">
+                                <label className="text-xs font-bold text-slate-400 uppercase">Password</label>
+                                <input 
+                                    type="password" 
+                                    value={password} 
+                                    onChange={(e) => setPassword(e.target.value)} 
+                                    className={`w-full p-3 border rounded-lg outline-none font-bold text-lg focus:ring-2 ${error ? 'border-red-500 ring-red-200' : 'border-slate-300 ring-indigo-200 focus:border-indigo-500'}`} 
+                                    placeholder="Enter password" 
+                                    autoFocus 
+                                />
+                            </div>
+                            {error && <p className="text-xs text-red-500 font-bold">Incorrect Password!</p>}
+                            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold transition-all transform active:scale-95 shadow-md">Login</button>
+                        </form>
+                    </Card>
+                </div>
+            );
         };
 
         // --- Settings View ---
@@ -211,7 +268,7 @@
                     if(worker.rateType === 'Hourly' && entry.unitType === 'Hour') pay = rate * units;
                     else if(worker.rateType === 'Daily' && entry.unitType === 'Day') pay = rate * units;
                     else if(worker.rateType === 'Monthly' && entry.unitType === 'Day') pay = (rate/30) * units; 
-                    else pay = 0; // Mismatch types, manual entry needed maybe?
+                    else pay = 0; // Mismatch types
                 }
 
                 setAttendance(prev => [{ id: Date.now(), date: entry.date, workerId: worker.id, workerName: worker.name, category: worker.category, units: entry.units, unitType: entry.unitType, totalPay: Math.round(pay) }, ...prev]);
@@ -251,11 +308,10 @@
         // --- Reports View ---
         const ReportsView = ({ transactions, projects, totalExpense, handleDelete }) => {
             const [searchTerm, setSearchTerm] = useState('');
-            const [filterType, setFilterType] = useState('All'); // Income/Expense
+            const [filterType, setFilterType] = useState('All');
             const [filterProject, setFilterProject] = useState('All');
             const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
-            // Filter Logic
             const filteredTransactions = useMemo(() => {
                 return transactions.filter(t => {
                     const matchesSearch = t.category.toLowerCase().includes(searchTerm.toLowerCase()) || t.vendor.toLowerCase().includes(searchTerm.toLowerCase());
@@ -277,7 +333,6 @@
                 const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Ledger"); XLSX.writeFile(wb, "Business_Report.xlsx");
             };
 
-            // Category Wise Summary
             const categorySummary = useMemo(() => {
                 const summary = {};
                 filteredTransactions.forEach(t => {
@@ -288,7 +343,6 @@
 
             return (
                 <div className="space-y-6 animate-in">
-                    {/* Filters */}
                     <Card>
                         <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Filter size={18}/> Report Filters</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -303,7 +357,6 @@
                     </Card>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Account Summary */}
                         <Card className="md:col-span-2">
                             <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Briefcase size={18}/> Account Summary</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -319,7 +372,6 @@
                             </div>
                         </Card>
 
-                        {/* Expense Breakdown */}
                         <Card>
                             <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2 text-rose-600"><TrendingDown size={18}/> Top Expenses</h3>
                             <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -333,7 +385,6 @@
                         </Card>
                     </div>
 
-                    {/* Ledger Table */}
                     <Card>
                         <h3 className="font-bold text-slate-800 mb-4">Transaction Ledger ({filteredTransactions.length})</h3>
                         <div className="overflow-x-auto rounded-lg border border-slate-200 max-h-[500px] overflow-y-auto custom-scrollbar">
@@ -410,6 +461,9 @@
 
         // --- Main App ---
         function App() {
+            // Authentication State
+            const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('auth_valid') === 'true');
+
             const [activeTab, setActiveTab] = useState('dashboard');
             const [transactions, setTransactions] = useState([]);
             const [projects, setProjects] = useState(['General Account']);
@@ -456,9 +510,36 @@
             const handleSubmit = (e) => { e.preventDefault(); if (!formData.amount || !formData.category) return; setTransactions([{ id: Date.now().toString(), type: formType, ...formData }, ...transactions]); alert("Saved!"); setFormData(prev => ({ ...prev, amount: '', vendor: '' })); };
             const handleDelete = (id) => { if (confirm("Delete entry?")) setTransactions(transactions.filter(t => t.id !== id)); };
 
+            // Login Handler
+            const handleLogin = () => {
+                setIsAuthenticated(true);
+                sessionStorage.setItem('auth_valid', 'true');
+            };
+
+            const handleLogout = () => {
+                setIsAuthenticated(false);
+                sessionStorage.removeItem('auth_valid');
+            }
+
+            // Auth Check
+            if (!isAuthenticated) {
+                return <LoginScreen onLogin={handleLogin} />;
+            }
+
             return (
-                <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 md:pb-0">
-                    <header className="bg-white border-b border-slate-200 sticky top-0 z-20"><div className="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center"><div className="flex items-center gap-3"><div className="bg-indigo-600 p-2 rounded-lg text-white"><Briefcase size={24}/></div><div><h1 className="text-lg font-bold text-slate-800 leading-tight">Business Manager</h1><p className="text-[10px] text-slate-500 font-medium tracking-wide uppercase">Finance & Staff</p></div></div><div className={`font-bold text-lg ${balance >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>₹ {balance.toLocaleString('en-IN')}</div></div></header>
+                <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 md:pb-0 animate-in">
+                    <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
+                        <div className="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-indigo-600 p-2 rounded-lg text-white"><Briefcase size={24}/></div>
+                                <div><h1 className="text-lg font-bold text-slate-800 leading-tight">Business Manager</h1><p className="text-[10px] text-slate-500 font-medium tracking-wide uppercase">Finance & Staff</p></div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className={`font-bold text-lg hidden sm:block ${balance >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>₹ {balance.toLocaleString('en-IN')}</div>
+                                <button onClick={handleLogout} className="text-sm text-slate-400 hover:text-red-500 font-bold border-l pl-4">Logout</button>
+                            </div>
+                        </div>
+                    </header>
 
                     <main className="max-w-6xl mx-auto p-4 md:p-8">
                         <div className="hidden md:flex justify-center mb-8 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-fit mx-auto">
@@ -496,18 +577,3 @@
 </html>
 
 
-            const exportAttendance = () => {
-                const ws = XLSX.utils.json_to_sheet(attendance.map(a => ({ Date: a.date, Name: a.workerName, Role: a.category, Duration: `${a.units} ${a.unitType}`, Pay: a.totalPay })));
-                const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-                XLSX.writeFile(wb, "Attendance_Report.xlsx");
-            };
-
-            return (
-                <div className="space-y-6 animate-in">
-                    <Card>
-                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} className="text-indigo-600"/> Mark Attendance</h3></div>
-                        <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <div className="md:col-span-1"><label className="block text-xs font-bold text-slate-500 mb-1">Date</label><input type="date" value={entry.date} onChange={e => setEntry({...entry, date: e.target.value})} className="w-full p-2 border rounded-lg text-sm" required /></div>
-                            <div className="md:col-span-1"><label className="block text-xs font-bold text-slate-500 mb-1">Staff Member</label><div className="flex gap-2"><select value={entry.workerId} onChange={e => setEntry({...entry, workerId: e.target.value})} className="w-full p-2 border rounded-lg text-sm" required><option value="">Select Staff</option>{workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select><button type="button" onClick={() => setIsWorkerModalOpen(true)} className="p-2 bg-slate-200 text-slate-600 rounded-lg"><Settings size={20}/></button></div></div>
-                            <div className="md:col-span-1"><label className="block text-xs font-bold text-slate-500 mb-1">Duration</label><div className="flex gap-2"><input type="number" step="0.5" value={entry.units} onChange={e => setEntry({...entry, units: e.target.value})} className="w-full p-2 border rounded-lg text-sm" required /><select value={entry.unitType} onChange={e=>setEntry({...entry, unitType: e.target.value})} className="bg-white border rounded text-sm"><option value="Day">Day(s)</option><option value="Hour">Hour(s)</option></select></div></div>
-                            <b
