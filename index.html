@@ -27,12 +27,12 @@
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-in { animation: fadeIn 0.4s ease-out; }
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        
         @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; }
         }
     </style>
 </head>
@@ -49,9 +49,7 @@
         const Plus = (p) => <Icon {...p}><path d="M5 12h14"/><path d="M12 5v14"/></Icon>;
         const Trash2 = (p) => <Icon {...p}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></Icon>;
         const LayoutDashboard = (p) => <Icon {...p}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></Icon>;
-        const Save = (p) => <Icon {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></Icon>;
         const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
-        const Wallet = (p) => <Icon {...p}><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></Icon>;
         const Briefcase = (p) => <Icon {...p}><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></Icon>;
         const Edit2 = (p) => <Icon {...p}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></Icon>;
         const Download = (p) => <Icon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
@@ -59,7 +57,6 @@
         const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
         const Users = (p) => <Icon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
         const Clock = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>;
-        const Lock = (p) => <Icon {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Icon>;
         const Package = (p) => <Icon {...p}><path d="m16.5 9.4-9-5.19"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></Icon>;
         const CreditCard = (p) => <Icon {...p}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></Icon>;
         const CheckSquare = (p) => <Icon {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></Icon>;
@@ -68,210 +65,39 @@
 
         // --- Helper Components ---
         const Card = ({ children, className = "" }) => <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-5 ${className}`}>{children}</div>;
-        const Badge = ({ children, color="blue" }) => <span className={`px-2 py-0.5 rounded text-xs font-bold bg-${color}-100 text-${color}-800`}>{children}</span>;
-
-        // --- Login Screen ---
-        const LoginScreen = ({ onLogin }) => {
-            const [password, setPassword] = useState("");
-            const [error, setError] = useState(false);
-            const handleSubmit = (e) => { e.preventDefault(); if (password === "S/i5i5i5") onLogin(); else { setError(true); setPassword(""); setTimeout(() => setError(false), 500); } };
-            return (
-                <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-                    <Card className={`w-full max-w-sm p-8 text-center space-y-6 ${error ? 'shake' : ''}`}>
-                        <div className="bg-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-indigo-200"><Lock size={32} className="text-white" /></div>
-                        <div><h2 className="text-xl font-bold text-slate-800">Secure Business ERP</h2></div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={`w-full p-3 border rounded-lg text-center font-bold text-lg outline-none ${error ? 'border-red-500 ring-2 ring-red-200' : 'border-slate-300 focus:border-indigo-500'}`} placeholder="Password" autoFocus />
-                            {error && <p className="text-xs text-red-500 font-bold">Incorrect Password!</p>}
-                            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold shadow-md">Unlock</button>
-                        </form>
-                    </Card>
-                </div>
-            );
-        };
-
-        // --- NEW: Settings View (Add/Delete Categories) ---
-        const SettingsView = ({ incomeCats, setIncomeCats, expenseCats, setExpenseCats }) => {
-            const [newItem, setNewItem] = useState("");
-            const [activeTab, setActiveTab] = useState('income');
-
-            const handleAdd = () => {
-                if(!newItem.trim()) return;
-                if(activeTab === 'income') setIncomeCats([...incomeCats, newItem.trim()]);
-                else setExpenseCats([...expenseCats, newItem.trim()]);
-                setNewItem("");
-            };
-
-            const handleDelete = (index, type) => {
-                if(confirm(`Remove category?`)) {
-                    if(type === 'income') setIncomeCats(incomeCats.filter((_, i) => i !== index));
-                    else setExpenseCats(expenseCats.filter((_, i) => i !== index));
-                }
-            };
-
-            return (
-                <div className="space-y-6 animate-in">
-                    <Card>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2"><Settings size={20}/> Category Settings</h3>
-                        </div>
-                        
-                        <div className="flex gap-2 mb-4 bg-slate-100 p-1 rounded-lg">
-                            <button onClick={() => setActiveTab('income')} className={`flex-1 py-2 text-sm font-bold rounded-md ${activeTab==='income' ? 'bg-white shadow text-emerald-600' : 'text-slate-500'}`}>Income Categories</button>
-                            <button onClick={() => setActiveTab('expense')} className={`flex-1 py-2 text-sm font-bold rounded-md ${activeTab==='expense' ? 'bg-white shadow text-rose-600' : 'text-slate-500'}`}>Expense Categories</button>
-                        </div>
-
-                        <div className="flex gap-2 mb-4">
-                            <input type="text" value={newItem} onChange={e => setNewItem(e.target.value)} placeholder={`Add new ${activeTab} category...`} className="flex-1 p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"/>
-                            <button onClick={handleAdd} className="bg-indigo-600 text-white px-4 rounded-lg font-bold hover:bg-indigo-700">Add</button>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                            {(activeTab === 'income' ? incomeCats : expenseCats).map((cat, idx) => (
-                                <div key={idx} className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2">
-                                    {cat}
-                                    <button onClick={() => handleDelete(idx, activeTab)} className="text-slate-400 hover:text-rose-500"><X size={14}/></button>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        // --- NEW: Worker Modal ---
-        const WorkerManagerModal = ({ isOpen, onClose, workers, setWorkers }) => {
-            const [form, setForm] = useState({ name: '', category: '', rate: '', rateType: 'Daily' });
-            if (!isOpen) return null;
-            const handleSave = (e) => { e.preventDefault(); if (!form.name) return; setWorkers(prev => [...prev, { id: Date.now(), ...form }]); setForm({ name: '', category: '', rate: '', rateType: 'Daily' }); };
-            const handleDelete = (id) => { if(confirm("Delete staff member?")) setWorkers(prev => prev.filter(w => w.id !== id)); };
-
-            return (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in">
-                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"><h3 className="font-bold text-slate-800 flex items-center gap-2"><Users size={18}/> Manage Staff</h3><button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={20}/></button></div>
-                        <div className="p-4">
-                            <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-12 gap-2 mb-6 bg-slate-50 p-3 rounded-lg border">
-                                <input placeholder="Name" className="p-2 border rounded text-sm sm:col-span-4" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
-                                <input placeholder="Role" className="p-2 border rounded text-sm sm:col-span-3" value={form.category} onChange={e => setForm({...form, category: e.target.value})} />
-                                <input type="number" placeholder="Rate" className="p-2 border rounded text-sm sm:col-span-2" value={form.rate} onChange={e => setForm({...form, rate: e.target.value})} />
-                                <select className="p-2 border rounded text-sm sm:col-span-2" value={form.rateType} onChange={e => setForm({...form, rateType: e.target.value})}><option>Daily</option><option>Hourly</option><option>Monthly</option></select>
-                                <button className="bg-indigo-600 text-white p-2 rounded text-sm font-bold sm:col-span-1">Add</button>
-                            </form>
-                            <div className="max-h-[50vh] overflow-y-auto space-y-2 custom-scrollbar">
-                                {workers.map(w => (
-                                    <div key={w.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
-                                        <div><div className="font-bold text-slate-800">{w.name}</div><div className="text-xs text-slate-500">{w.category} • {w.rate ? `₹${w.rate}/${w.rateType}` : 'No Rate'}</div></div>
-                                        <button onClick={() => handleDelete(w.id)} className="text-rose-500 p-1 hover:bg-rose-100 rounded"><Trash2 size={16}/></button>
-                                    </div>
-                                ))}
-                                {workers.length === 0 && <p className="text-center text-slate-400 py-4">No staff added.</p>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- NEW: Attendance View ---
-        const AttendanceView = ({ workers, setWorkers, attendance, setAttendance }) => {
-            const [isWorkerModalOpen, setIsWorkerModalOpen] = useState(false);
-            const [entry, setEntry] = useState({ date: new Date().toISOString().split('T')[0], workerId: '', units: '1', unitType: 'Day' });
-            
-            const handleSave = (e) => {
-                e.preventDefault();
-                const worker = workers.find(w => w.id === parseInt(entry.workerId));
-                if (!worker) return;
-                
-                let pay = 0;
-                if(worker.rate) {
-                    const rate = parseFloat(worker.rate);
-                    const units = parseFloat(entry.units);
-                    if(worker.rateType === 'Hourly' && entry.unitType === 'Hour') pay = rate * units;
-                    else if(worker.rateType === 'Daily' && entry.unitType === 'Day') pay = rate * units;
-                    else if(worker.rateType === 'Monthly' && entry.unitType === 'Day') pay = (rate/30) * units; 
-                    else pay = 0; 
-                }
-
-                setAttendance(prev => [{ id: Date.now(), date: entry.date, workerId: worker.id, workerName: worker.name, category: worker.category, units: entry.units, unitType: entry.unitType, totalPay: Math.round(pay) }, ...prev]);
-            };
-            
-            const exportAttendance = () => {
-                const ws = XLSX.utils.json_to_sheet(attendance.map(a => ({ Date: a.date, Name: a.workerName, Role: a.category, Duration: `${a.units} ${a.unitType}`, Pay: a.totalPay })));
-                const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-                XLSX.writeFile(wb, "Attendance_Report.xlsx");
-            };
-
-            return (
-                <div className="space-y-6 animate-in">
-                    <Card>
-                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} className="text-indigo-600"/> Mark Attendance</h3></div>
-                        <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <div className="md:col-span-1"><label className="block text-xs font-bold text-slate-500 mb-1">Date</label><input type="date" value={entry.date} onChange={e => setEntry({...entry, date: e.target.value})} className="w-full p-2 border rounded-lg text-sm" required /></div>
-                            <div className="md:col-span-1"><label className="block text-xs font-bold text-slate-500 mb-1">Staff Member</label><div className="flex gap-2"><select value={entry.workerId} onChange={e => setEntry({...entry, workerId: e.target.value})} className="w-full p-2 border rounded-lg text-sm" required><option value="">Select Staff</option>{workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select><button type="button" onClick={() => setIsWorkerModalOpen(true)} className="p-2 bg-slate-200 text-slate-600 rounded-lg"><Settings size={20}/></button></div></div>
-                            <div className="md:col-span-1"><label className="block text-xs font-bold text-slate-500 mb-1">Duration</label><div className="flex gap-2"><input type="number" step="0.5" value={entry.units} onChange={e => setEntry({...entry, units: e.target.value})} className="w-full p-2 border rounded-lg text-sm" required /><select value={entry.unitType} onChange={e=>setEntry({...entry, unitType: e.target.value})} className="bg-white border rounded text-sm"><option value="Day">Day(s)</option><option value="Hour">Hour(s)</option></select></div></div>
-                            <button className="md:col-span-1 w-full bg-indigo-600 text-white p-2 rounded-lg font-bold hover:bg-indigo-700 text-sm">Save Record</button>
-                        </form>
-                    </Card>
-                    <Card>
-                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-slate-700">Attendance Log</h3><button onClick={exportAttendance} className="text-green-600 text-sm font-bold flex items-center gap-1 hover:bg-green-50 p-2 rounded"><Download size={14}/> Download Excel</button></div>
-                        <div className="overflow-x-auto rounded-lg border border-slate-200 max-h-[400px] overflow-y-auto custom-scrollbar">
-                            <table className="w-full text-left bg-white text-sm">
-                                <thead className="bg-slate-100 text-slate-600 sticky top-0"><tr><th className="p-3">Date</th><th className="p-3">Staff</th><th className="p-3">Duration</th><th className="p-3 text-right">Pay</th><th className="p-3 text-center">Action</th></tr></thead>
-                                <tbody className="divide-y divide-slate-100">{attendance.map(rec => (<tr key={rec.id} className="hover:bg-slate-50"><td className="p-3 whitespace-nowrap">{rec.date}</td><td className="p-3 font-bold">{rec.workerName} <span className="text-xs font-normal text-slate-500">({rec.category})</span></td><td className="p-3">{rec.units} {rec.unitType}</td><td className="p-3 text-right font-bold text-slate-700">{rec.totalPay > 0 ? `₹${rec.totalPay}` : '-'}</td><td className="p-3 text-center"><button onClick={() => {if(confirm("Delete record?")) setAttendance(attendance.filter(a => a.id !== rec.id))}} className="text-rose-500 hover:bg-rose-100 p-1 rounded"><Trash2 size={16}/></button></td></tr>))}</tbody>
-                            </table>
-                        </div>
-                    </Card>
-                    <WorkerManagerModal isOpen={isWorkerModalOpen} onClose={() => setIsWorkerModalOpen(false)} workers={workers} setWorkers={setWorkers} />
-                </div>
-            );
-        };
-
-        // --- NEW: Inventory View ---
-        const InventoryView = ({ inventory, setInventory }) => {
-            const [form, setForm] = useState({ name: '', qty: '', price: '', minStock: '' });
-            const handleSave = (e) => {
-                e.preventDefault();
-                setInventory(prev => [...prev, { id: Date.now(), ...form }]);
-                setForm({ name: '', qty: '', price: '', minStock: '' });
-            };
-            return (
-                <div className="space-y-6 animate-in">
-                    <Card><h3 className="font-bold flex gap-2 items-center mb-4"><Package size={20} className="text-orange-500"/> Inventory Management</h3>
-                    <form onSubmit={handleSave} className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                        <input placeholder="Item Name" className="border p-2 rounded text-sm md:col-span-2" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required/>
-                        <input type="number" placeholder="Qty" className="border p-2 rounded text-sm" value={form.qty} onChange={e=>setForm({...form, qty:e.target.value})} required/>
-                        <input type="number" placeholder="Price (₹)" className="border p-2 rounded text-sm" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} required/>
-                        <button className="bg-orange-500 text-white p-2 rounded font-bold text-sm">Add Item</button>
-                    </form>
-                    <div className="overflow-x-auto"><table className="w-full text-sm text-left">
-                        <thead className="bg-slate-100 text-slate-600"><tr><th className="p-3">Item</th><th className="p-3">Qty</th><th className="p-3">Value</th><th className="p-3">Action</th></tr></thead>
-                        <tbody>{inventory.map(i=>(<tr key={i.id} className="border-b"><td className="p-3 font-medium">{i.name}</td><td className="p-3">{i.qty}</td><td className="p-3">₹{i.qty*i.price}</td><td className="p-3"><button onClick={()=>setInventory(inventory.filter(x=>x.id!==i.id))} className="text-red-500"><Trash2 size={16}/></button></td></tr>))}</tbody>
-                    </table></div></Card>
-                </div>
-            );
-        };
-
-        // --- NEW: Invoice View ---
+        
+        // --- Invoice View ---
         const InvoiceView = ({ invoices, setInvoices, contacts }) => {
-            const [view, setView] = useState('list'); // list or create
+            const [view, setView] = useState('list');
+            const [printMode, setPrintMode] = useState(null);
             const [inv, setInv] = useState({ client: '', items: [], date: new Date().toISOString().split('T')[0] });
             const [lineItem, setLineItem] = useState({ desc: '', qty: 1, price: 0 });
 
             const addItem = () => { if(lineItem.desc){ setInv(p => ({...p, items: [...p.items, lineItem]})); setLineItem({desc:'', qty:1, price:0}); } };
-            const saveInvoice = () => { if(inv.client && inv.items.length){ setInvoices(p=>[{id: Date.now(), ...inv, total: inv.items.reduce((s,i)=>s+(i.qty*i.price),0)}, ...p]); setView('list'); setInv({ client: '', items: [], date: new Date().toISOString().split('T')[0] }); } };
-            
-            const printInvoice = (invoice) => {
-                const win = window.open('', '', 'height=600,width=800');
-                win.document.write(`<html><head><title>Invoice</title><style>body{font-family:sans-serif; padding:40px;}</style></head><body>
-                    <h1>INVOICE</h1><p>Date: ${invoice.date}</p><p><strong>Bill To:</strong> ${invoice.client}</p>
-                    <table style="width:100%; border-collapse:collapse; margin-top:20px;">
-                    <tr style="background:#eee; text-align:left;"><th style="padding:10px;">Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
-                    ${invoice.items.map(i => `<tr><td style="padding:10px; border-bottom:1px solid #ddd;">${i.desc}</td><td>${i.qty}</td><td>${i.price}</td><td>${i.qty*i.price}</td></tr>`).join('')}
-                    </table><h3 style="text-align:right; margin-top:20px;">Total: ₹${invoice.total}</h3>
-                </body></html>`);
-                win.document.close();
-                win.print();
+            const removeItem = (idx) => { setInv(p => ({...p, items: p.items.filter((_, i) => i !== idx)})); };
+            const saveInvoice = () => { 
+                if(inv.client && inv.items.length){ 
+                    const newInv = {id: Date.now(), ...inv, total: inv.items.reduce((s,i)=>s+(i.qty*i.price),0)};
+                    setInvoices(p=>[newInv, ...p]); setView('list'); setInv({ client: '', items: [], date: new Date().toISOString().split('T')[0] }); 
+                } 
+            };
+            const handlePrint = (invoice) => { setPrintMode(invoice); setTimeout(() => { window.print(); setPrintMode(null); }, 100); }
+
+            if(printMode) {
+                return (
+                    <div id="printable-area" className="p-8 bg-white min-h-screen">
+                        <div className="flex justify-between items-start mb-8 border-b pb-4">
+                            <div><h1 className="text-3xl font-bold text-slate-800">INVOICE</h1><p className="text-slate-500">#{printMode.id}</p></div>
+                            <div className="text-right"><h2 className="font-bold text-xl">{printMode.client}</h2><p>Date: {printMode.date}</p></div>
+                        </div>
+                        <table className="w-full mb-8 border-collapse">
+                            <thead><tr className="bg-slate-100 border-b-2 border-slate-300"><th className="p-3 text-left">Item</th><th className="p-3 text-right">Qty</th><th className="p-3 text-right">Price</th><th className="p-3 text-right">Total</th></tr></thead>
+                            <tbody>{printMode.items.map((i, idx)=><tr key={idx} className="border-b"><td className="p-3">{i.desc}</td><td className="p-3 text-right">{i.qty}</td><td className="p-3 text-right">₹{i.price}</td><td className="p-3 text-right">₹{i.qty*i.price}</td></tr>)}</tbody>
+                        </table>
+                        <div className="text-right"><h2 className="text-2xl font-bold">Total: ₹{printMode.total.toLocaleString()}</h2></div>
+                        <div className="mt-12 text-center text-sm text-slate-500 border-t pt-4">Thank you for your business!</div>
+                    </div>
+                );
             }
 
             if(view === 'create') return (
@@ -279,19 +105,18 @@
                     <Card>
                         <div className="flex justify-between mb-4"><h3 className="font-bold">New Invoice</h3><button onClick={()=>setView('list')} className="text-sm text-slate-500">Cancel</button></div>
                         <div className="grid md:grid-cols-2 gap-4 mb-4">
-                            <select className="border p-2 rounded" value={inv.client} onChange={e=>setInv({...inv, client:e.target.value})}>
-                                <option value="">Select Client</option>{contacts.filter(c=>c.type==='Client').map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
-                            </select>
+                            <input className="border p-2 rounded" placeholder="Client Name" list="clients-list" value={inv.client} onChange={e=>setInv({...inv, client:e.target.value})}/>
+                            <datalist id="clients-list">{contacts.filter(c=>c.type==='Client').map(c=><option key={c.name} value={c.name}/>)}</datalist>
                             <input type="date" className="border p-2 rounded" value={inv.date} onChange={e=>setInv({...inv, date:e.target.value})}/>
                         </div>
                         <div className="bg-slate-50 p-3 rounded mb-4 grid grid-cols-12 gap-2">
-                            <input placeholder="Item Desc" className="col-span-6 border p-2 rounded text-sm" value={lineItem.desc} onChange={e=>setLineItem({...lineItem, desc:e.target.value})}/>
+                            <input placeholder="Item Desc" className="col-span-5 border p-2 rounded text-sm" value={lineItem.desc} onChange={e=>setLineItem({...lineItem, desc:e.target.value})}/>
                             <input type="number" placeholder="Qty" className="col-span-2 border p-2 rounded text-sm" value={lineItem.qty} onChange={e=>setLineItem({...lineItem, qty:e.target.value})}/>
                             <input type="number" placeholder="Price" className="col-span-3 border p-2 rounded text-sm" value={lineItem.price} onChange={e=>setLineItem({...lineItem, price:e.target.value})}/>
-                            <button onClick={addItem} className="col-span-1 bg-blue-600 text-white rounded"><Plus size={16} className="mx-auto"/></button>
+                            <button onClick={addItem} className="col-span-2 bg-blue-600 text-white rounded font-bold text-sm">Add</button>
                         </div>
                         <div className="space-y-2 mb-4">
-                            {inv.items.map((i, idx)=><div key={idx} className="flex justify-between text-sm bg-slate-100 p-2 rounded"><span>{i.desc} x {i.qty}</span><span>₹{i.qty*i.price}</span></div>)}
+                            {inv.items.map((i, idx)=><div key={idx} className="flex justify-between text-sm bg-slate-100 p-2 rounded items-center"><span>{i.desc} x {i.qty}</span><div className="flex gap-4"><span>₹{i.qty*i.price}</span><button onClick={()=>removeItem(idx)} className="text-red-500"><Trash2 size={14}/></button></div></div>)}
                         </div>
                         <div className="text-right font-bold text-xl mb-4">Total: ₹{inv.items.reduce((s,i)=>s+(i.qty*i.price),0)}</div>
                         <button onClick={saveInvoice} className="w-full bg-green-600 text-white p-3 rounded font-bold">Generate Invoice</button>
@@ -305,9 +130,9 @@
                         <div className="flex justify-between items-center mb-4"><h3 className="font-bold flex items-center gap-2"><FileText size={20} className="text-blue-500"/> Invoices</h3><button onClick={()=>setView('create')} className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm font-bold flex items-center gap-1"><Plus size={16}/> New</button></div>
                         <div className="space-y-2 max-h-[400px] overflow-y-auto">
                             {invoices.map(i=>(
-                                <div key={i.id} className="p-3 border rounded flex justify-between items-center">
-                                    <div><div className="font-bold">{i.client}</div><div className="text-xs text-slate-500">{i.date} • {i.items.length} items</div></div>
-                                    <div className="flex items-center gap-3"><span className="font-bold text-green-700">₹{i.total}</span><button onClick={()=>printInvoice(i)} className="text-slate-500 hover:text-black"><Printer size={18}/></button></div>
+                                <div key={i.id} className="p-3 border rounded flex justify-between items-center bg-white hover:bg-slate-50">
+                                    <div><div className="font-bold">{i.client}</div><div className="text-xs text-slate-500">{i.date} • #{i.id.toString().slice(-4)}</div></div>
+                                    <div className="flex items-center gap-3"><span className="font-bold text-green-700">₹{i.total}</span><button onClick={()=>handlePrint(i)} className="bg-slate-100 p-2 rounded text-slate-600 hover:bg-slate-200"><Printer size={18}/></button></div>
                                 </div>
                             ))}
                             {invoices.length===0 && <p className="text-center text-slate-400 py-4">No invoices yet.</p>}
@@ -317,78 +142,253 @@
             );
         };
 
-        // --- NEW: Loan View ---
-        const LoanView = ({ loans, setLoans, contacts }) => {
+        // --- Loans View ---
+        const LoanView = ({ loans, setLoans, contacts, setContacts }) => {
             const [form, setForm] = useState({ name: '', amount: '', type: 'Given', date: new Date().toISOString().split('T')[0] });
+            const [newPerson, setNewPerson] = useState("");
+            const [showAddPerson, setShowAddPerson] = useState(false);
+
             const handleSave = (e) => { e.preventDefault(); setLoans(p=>[...p, {id:Date.now(), ...form}]); setForm({name:'', amount:'', type:'Given', date: new Date().toISOString().split('T')[0]}) };
+            
+            const addPerson = () => { if(newPerson.trim()) { setContacts(p => [...p, {id: Date.now(), name: newPerson.trim(), phone: '', type: 'Other'}]); setForm(p => ({...p, name: newPerson.trim()})); setNewPerson(""); setShowAddPerson(false); } };
+            const deletePerson = () => { if(!form.name) return; if(confirm(`Delete "${form.name}"?`)) { setContacts(p => p.filter(c => c.name !== form.name)); setForm(p => ({...p, name: ''})); } }
+
             return (
                 <Card className="animate-in">
-                    <h3 className="font-bold flex items-center gap-2 mb-4"><CreditCard size={20} className="text-purple-500"/> Loan Tracker (கடன்)</h3>
-                    <form onSubmit={handleSave} className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6 bg-slate-50 p-3 rounded">
-                        <select className="border p-2 rounded text-sm md:col-span-2" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required>
-                            <option value="">Select Person</option>{contacts.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
-                        </select>
-                        <input type="number" placeholder="Amount" className="border p-2 rounded text-sm" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})} required/>
-                        <select className="border p-2 rounded text-sm" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}><option value="Given">Given (கொடுத்தது)</option><option value="Taken">Taken (வாங்கியது)</option></select>
-                        <button className="bg-purple-600 text-white p-2 rounded text-sm font-bold">Save</button>
+                    <h3 className="font-bold flex items-center gap-2 mb-4"><CreditCard size={20} className="text-purple-500"/> Loan Tracker</h3>
+                    <form onSubmit={handleSave} className="mb-6 bg-slate-50 p-4 rounded border">
+                        <div className="flex gap-2 mb-3">
+                             <div className="flex-1 flex gap-1">
+                                <select className="flex-1 border p-2 rounded text-sm" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required>
+                                    <option value="">Select Person</option>{contacts.map(c=><option key={c.id} value={c.name}>{c.name}</option>)}
+                                </select>
+                                <button type="button" onClick={() => setShowAddPerson(!showAddPerson)} className="bg-blue-100 text-blue-600 p-2 rounded"><Plus size={18}/></button>
+                                {form.name && <button type="button" onClick={deletePerson} className="bg-red-100 text-red-600 p-2 rounded"><Trash2 size={18}/></button>}
+                            </div>
+                        </div>
+                        {showAddPerson && (
+                            <div className="flex gap-2 mb-3 animate-in"><input placeholder="Enter Name" className="flex-1 border p-2 rounded text-sm" value={newPerson} onChange={e=>setNewPerson(e.target.value)} autoFocus/><button type="button" onClick={addPerson} className="bg-blue-600 text-white px-4 rounded text-xs font-bold">Save</button></div>
+                        )}
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            <input type="number" placeholder="Amount" className="border p-2 rounded text-sm" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})} required/>
+                            <select className="border p-2 rounded text-sm" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}><option value="Given">Given</option><option value="Taken">Taken</option></select>
+                        </div>
+                        <button className="w-full bg-purple-600 text-white p-2 rounded text-sm font-bold">Save Record</button>
                     </form>
-                    <div className="space-y-2">
-                        {loans.map(l=>(
-                            <div key={l.id} className="flex justify-between items-center p-3 border-b">
-                                <div><div className="font-bold">{l.name}</div><div className="text-xs text-slate-500">{l.date}</div></div>
-                                <div className={`font-bold ${l.type==='Given'?'text-red-500':'text-green-500'}`}>{l.type==='Given'?'Receivable':'Payable'} ₹{l.amount}</div>
-                                <button onClick={()=>setLoans(loans.filter(x=>x.id!==l.id))} className="text-slate-400"><Trash2 size={14}/></button>
-                            </div>
-                        ))}
+                    <div className="space-y-2 max-h-[350px] overflow-y-auto">
+                        {loans.map(l=>(<div key={l.id} className="flex justify-between items-center p-3 border-b hover:bg-slate-50"><div><div className="font-bold">{l.name}</div><div className="text-xs text-slate-500">{l.date}</div></div><div className={`font-bold ${l.type==='Given'?'text-red-500':'text-green-500'}`}>{l.type==='Given'?'Receivable':'Payable'} ₹{l.amount}</div><button onClick={()=>setLoans(loans.filter(x=>x.id!==l.id))} className="text-slate-400 hover:text-red-500"><Trash2 size={14}/></button></div>))}
+                        {loans.length === 0 && <p className="text-center text-slate-400 py-4">No active loans.</p>}
                     </div>
                 </Card>
             )
         }
 
-        // --- NEW: Task View ---
-        const TaskView = ({ tasks, setTasks }) => {
-            const [txt, setTxt] = useState('');
-            const add = () => { if(txt){ setTasks(p=>[...p, {id:Date.now(), text:txt, done:false}]); setTxt(''); } };
+        // --- NEW: Settings View (Project Management Added) ---
+        const SettingsView = ({ 
+            incomeCats, setIncomeCats, expenseCats, setExpenseCats, 
+            enabledModules, setEnabledModules, projects, setProjects, fullData, updateProjectName 
+        }) => {
+            const [newItem, setNewItem] = useState("");
+            const [section, setSection] = useState('projects'); // projects, categories, modules, data
+            
+            // Project Management State
+            const [newProj, setNewProj] = useState("");
+            const [editProj, setEditProj] = useState({ idx: -1, val: "" });
+
+            const handleAddCat = (type) => { if(!newItem.trim()) return; if(type === 'income') setIncomeCats([...incomeCats, newItem.trim()]); else setExpenseCats([...expenseCats, newItem.trim()]); setNewItem(""); };
+            const handleDeleteCat = (idx, type) => { if(confirm("Delete category?")) { if(type === 'income') setIncomeCats(incomeCats.filter((_, i) => i !== idx)); else setExpenseCats(expenseCats.filter((_, i) => i !== idx)); } };
+            
+            const handleAddProj = () => { if(newProj.trim() && !projects.includes(newProj.trim())) { setProjects([...projects, newProj.trim()]); setNewProj(""); } };
+            const handleEditProj = (idx) => { if(editProj.val.trim() && !projects.includes(editProj.val.trim())) { updateProjectName(projects[idx], editProj.val.trim()); const p = [...projects]; p[idx] = editProj.val.trim(); setProjects(p); setEditProj({idx:-1, val:""}); } };
+            const handleDeleteProj = (idx) => { if(confirm("Delete project?")) { setProjects(projects.filter((_, i) => i !== idx)); } };
+
+            const downloadAllData = () => {
+                const wb = XLSX.utils.book_new();
+                if(fullData.txns.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.txns), "Transactions");
+                if(fullData.staffPayments.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.staffPayments), "Staff_Payments");
+                if(fullData.inventory.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.inventory), "Inventory");
+                if(fullData.invoices.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.invoices.map(i=>({id:i.id, date:i.date, client:i.client, total:i.total}))), "Invoices");
+                if(fullData.loans.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.loans), "Loans");
+                if(fullData.attendance.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.attendance), "Attendance");
+                if(fullData.contacts.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.contacts), "Contacts");
+                XLSX.writeFile(wb, "Full_Business_Data.xlsx");
+            };
+
             return (
-                <Card className="animate-in">
-                    <h3 className="font-bold flex items-center gap-2 mb-4"><CheckSquare size={20} className="text-emerald-500"/> Tasks (வேலைகள்)</h3>
-                    <div className="flex gap-2 mb-4"><input className="flex-1 border p-2 rounded" placeholder="Add new task..." value={txt} onChange={e=>setTxt(e.target.value)}/><button onClick={add} className="bg-emerald-600 text-white px-4 rounded font-bold">Add</button></div>
-                    <div className="space-y-2">
-                        {tasks.map(t=>(
-                            <div key={t.id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded">
-                                <input type="checkbox" checked={t.done} onChange={()=>setTasks(tasks.map(x=>x.id===t.id?{...x, done:!x.done}:x))} className="w-5 h-5 accent-emerald-600"/>
-                                <span className={`flex-1 ${t.done?'line-through text-slate-400':''}`}>{t.text}</span>
-                                <button onClick={()=>setTasks(tasks.filter(x=>x.id!==t.id))} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button>
-                            </div>
+                <div className="space-y-6 animate-in">
+                    <div className="flex bg-white p-1 rounded-lg border shadow-sm overflow-x-auto">
+                        {['projects', 'categories', 'modules', 'data'].map(s => (
+                            <button key={s} onClick={()=>setSection(s)} className={`flex-1 min-w-[80px] py-2 text-sm font-bold capitalize rounded-md ${section===s ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`}>{s}</button>
                         ))}
                     </div>
-                </Card>
+
+                    {section === 'projects' && (
+                        <Card>
+                            <h3 className="font-bold mb-4">Manage Project Names</h3>
+                            <div className="flex gap-2 mb-4">
+                                <input value={newProj} onChange={e=>setNewProj(e.target.value)} placeholder="New Project Name" className="flex-1 border p-2 rounded text-sm"/>
+                                <button onClick={handleAddProj} className="bg-indigo-600 text-white px-4 rounded font-bold text-sm">Add</button>
+                            </div>
+                            <div className="space-y-2">
+                                {projects.map((p, i)=>(
+                                    <div key={i} className="flex justify-between items-center bg-slate-50 p-2 rounded border">
+                                        {editProj.idx === i ? (
+                                            <div className="flex-1 flex gap-2"><input value={editProj.val} onChange={e=>setEditProj({...editProj, val:e.target.value})} className="flex-1 border p-1 rounded text-sm"/><button onClick={()=>handleEditProj(i)} className="text-green-600 text-xs font-bold">Save</button></div>
+                                        ) : (
+                                            <span className="font-medium text-sm">{p}</span>
+                                        )}
+                                        {editProj.idx !== i && <div className="flex gap-2">
+                                            <button onClick={()=>setEditProj({idx:i, val:p})} className="text-blue-500"><Edit2 size={16}/></button>
+                                            <button onClick={()=>handleDeleteProj(i)} className="text-red-500"><Trash2 size={16}/></button>
+                                        </div>}
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    )}
+
+                    {section === 'categories' && (
+                        <Card>
+                            <h3 className="font-bold mb-4">Income Categories</h3>
+                            <div className="flex gap-2 mb-4"><input id="newInc" placeholder="New Income Cat" className="flex-1 border p-2 rounded text-sm"/><button onClick={()=>{setNewItem(document.getElementById('newInc').value); handleAddCat('income'); document.getElementById('newInc').value=''}} className="bg-emerald-600 text-white px-3 rounded text-sm">Add</button></div>
+                            <div className="flex flex-wrap gap-2 mb-6">{incomeCats.map((c, i)=>(<div key={i} className="bg-emerald-50 px-2 py-1 rounded text-xs border border-emerald-200 flex items-center gap-1">{c} <button onClick={()=>handleDeleteCat(i, 'income')}><X size={12}/></button></div>))}</div>
+                            
+                            <h3 className="font-bold mb-4">Expense Categories</h3>
+                            <div className="flex gap-2 mb-4"><input id="newExp" placeholder="New Expense Cat" className="flex-1 border p-2 rounded text-sm"/><button onClick={()=>{setNewItem(document.getElementById('newExp').value); handleAddCat('expense'); document.getElementById('newExp').value=''}} className="bg-rose-600 text-white px-3 rounded text-sm">Add</button></div>
+                            <div className="flex flex-wrap gap-2">{expenseCats.map((c, i)=>(<div key={i} className="bg-rose-50 px-2 py-1 rounded text-xs border border-rose-200 flex items-center gap-1">{c} <button onClick={()=>handleDeleteCat(i, 'expense')}><X size={12}/></button></div>))}</div>
+                        </Card>
+                    )}
+
+                    {section === 'modules' && (
+                        <Card>
+                            <h3 className="font-bold mb-4">Dashboard Quick Access</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {Object.keys(enabledModules).map(key => (
+                                    <label key={key} className="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-slate-50">
+                                        <input type="checkbox" checked={enabledModules[key]} onChange={()=>setEnabledModules({...enabledModules, [key]: !enabledModules[key]})} className="w-5 h-5 accent-indigo-600"/>
+                                        <span className="capitalize font-medium">{key}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </Card>
+                    )}
+
+                    {section === 'data' && (
+                        <Card>
+                            <h3 className="font-bold mb-4">Data Management</h3>
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4">
+                                <h4 className="font-bold text-blue-800 mb-1">Download Full Backup</h4>
+                                <p className="text-xs text-blue-600 mb-3">Download everything (Entries, Staff, Stock, Invoices) in one Excel file.</p>
+                                <button onClick={downloadAllData} className="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm flex items-center gap-2"><Download size={16}/> Download Excel</button>
+                            </div>
+                        </Card>
+                    )}
+                </div>
             )
         }
 
-        // --- NEW: Contact & Asset Views (Simplified) ---
+        // --- IMPROVED: Staff View (Attendance + Payments) ---
+        const StaffView = ({ workers, setWorkers, attendance, setAttendance, staffPayments, setStaffPayments }) => {
+            const [view, setView] = useState('list'); // list, mark, pay
+            const [entry, setEntry] = useState({ date: new Date().toISOString().split('T')[0], workerId: '', units: '1', unitType: 'Day' });
+            const [payForm, setPayForm] = useState({ date: new Date().toISOString().split('T')[0], workerId: '', amount: '', type: 'Salary' }); // Salary or Advance
+            const [newWorker, setNewWorker] = useState("");
+
+            const saveAttendance = (e) => {
+                e.preventDefault(); const w = workers.find(x=>x.id==entry.workerId); if(!w)return;
+                const pay = w.rate ? w.rate * entry.units : 0;
+                setAttendance(p=>[{id:Date.now(), ...entry, workerName: w.name, pay}, ...p]);
+                alert("Marked!");
+            };
+
+            const savePayment = (e) => {
+                e.preventDefault(); const w = workers.find(x=>x.id==payForm.workerId); if(!w)return;
+                setStaffPayments(p=>[{id:Date.now(), ...payForm, workerName: w.name}, ...p]);
+                alert("Payment Recorded!");
+            };
+
+            const getStaffBalance = (wId) => {
+                const earned = attendance.filter(a=>a.workerId == wId).reduce((s,a)=>s+(a.pay||0),0);
+                const paid = staffPayments.filter(p=>p.workerId == wId).reduce((s,p)=>s+parseFloat(p.amount),0);
+                return earned - paid;
+            }
+
+            return (
+                <div className="space-y-4 animate-in">
+                    <div className="flex bg-white p-1 rounded shadow-sm border">
+                        {['list','mark','pay'].map(v=>(<button key={v} onClick={()=>setView(v)} className={`flex-1 py-2 text-sm font-bold capitalize rounded ${view===v?'bg-yellow-100 text-yellow-800':'text-slate-500'}`}>{v}</button>))}
+                    </div>
+
+                    {view === 'list' && (
+                        <Card>
+                            <div className="flex gap-2 mb-4"><input placeholder="New Staff Name" className="border p-2 rounded text-sm flex-1" value={newWorker} onChange={e=>setNewWorker(e.target.value)}/><button onClick={()=>{if(newWorker){setWorkers(p=>[...p,{id:Date.now(), name:newWorker, rate:500}]); setNewWorker('')}}} className="bg-yellow-600 text-white px-3 rounded text-sm">Add</button></div>
+                            <div className="space-y-2">
+                                {workers.map(w => {
+                                    const bal = getStaffBalance(w.id);
+                                    return (
+                                        <div key={w.id} className="p-3 border rounded flex justify-between items-center">
+                                            <div><div className="font-bold">{w.name}</div><div className="text-xs text-slate-500">Rate: ₹{w.rate}</div></div>
+                                            <div className="text-right"><div className="text-xs text-slate-400">Balance Due</div><div className={`font-bold ${bal>0?'text-red-500':'text-green-500'}`}>₹{bal}</div></div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </Card>
+                    )}
+
+                    {view === 'mark' && (
+                        <Card><h3 className="font-bold mb-4">Mark Attendance (Work)</h3>
+                        <form onSubmit={saveAttendance} className="grid grid-cols-1 gap-3">
+                            <input type="date" value={entry.date} onChange={e=>setEntry({...entry, date:e.target.value})} className="border p-2 rounded"/>
+                            <select value={entry.workerId} onChange={e=>setEntry({...entry, workerId:e.target.value})} className="border p-2 rounded" required><option value="">Select Staff</option>{workers.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select>
+                            <div className="flex gap-2"><input type="number" step="0.5" value={entry.units} onChange={e=>setEntry({...entry, units:e.target.value})} className="border p-2 rounded flex-1"/><select value={entry.unitType} onChange={e=>setEntry({...entry, unitType:e.target.value})} className="border p-2 rounded"><option>Day</option><option>Hour</option></select></div>
+                            <button className="bg-blue-600 text-white p-2 rounded font-bold">Save Work Record</button>
+                        </form></Card>
+                    )}
+
+                    {view === 'pay' && (
+                        <Card><h3 className="font-bold mb-4 text-green-700">Staff Payment (Give Money)</h3>
+                        <form onSubmit={savePayment} className="grid grid-cols-1 gap-3">
+                            <input type="date" value={payForm.date} onChange={e=>setPayForm({...payForm, date:e.target.value})} className="border p-2 rounded"/>
+                            <select value={payForm.workerId} onChange={e=>setPayForm({...payForm, workerId:e.target.value})} className="border p-2 rounded" required><option value="">Select Staff</option>{workers.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select>
+                            <input type="number" placeholder="Amount Given" value={payForm.amount} onChange={e=>setPayForm({...payForm, amount:e.target.value})} className="border p-2 rounded" required/>
+                            <select value={payForm.type} onChange={e=>setPayForm({...payForm, type:e.target.value})} className="border p-2 rounded"><option>Salary</option><option>Advance</option></select>
+                            <button className="bg-green-600 text-white p-2 rounded font-bold">Record Payment</button>
+                        </form></Card>
+                    )}
+                </div>
+            );
+        };
+
         const SimpleListView = ({ title, icon, data, setData, fields, color }) => {
             const [form, setForm] = useState(fields.reduce((acc, f) => ({...acc, [f.key]: ''}), {}));
             const save = (e) => { e.preventDefault(); setData(p=>[...p, {id:Date.now(), ...form}]); setForm(fields.reduce((acc, f) => ({...acc, [f.key]: ''}), {})); };
             return (
-                <Card className="animate-in">
-                    <h3 className={`font-bold flex items-center gap-2 mb-4 text-${color}-600`}>{icon} {title}</h3>
-                    <form onSubmit={save} className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 bg-slate-50 p-3 rounded">
-                        {fields.map(f=>(
-                            <div key={f.key} className={f.full ? 'col-span-2 md:col-span-4' : ''}>
-                                {f.type==='select' ? 
-                                    <select className="w-full border p-2 rounded text-sm" value={form[f.key]} onChange={e=>setForm({...form, [f.key]:e.target.value})} required>{f.opts.map(o=><option key={o} value={o}>{o}</option>)}</select> 
-                                    : <input className="w-full border p-2 rounded text-sm" placeholder={f.label} value={form[f.key]} onChange={e=>setForm({...form, [f.key]:e.target.value})} required={f.req} type={f.type||'text'}/>}
-                            </div>
-                        ))}
-                        <button className={`bg-${color}-600 text-white p-2 rounded font-bold col-span-2 md:col-span-1`}>Add</button>
-                    </form>
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">{data.map(d=>(<div key={d.id} className="flex justify-between p-2 border-b"><div><div className="font-bold">{d[fields[0].key]}</div><div className="text-xs text-slate-500">{d[fields[1].key]}</div></div><button onClick={()=>setData(data.filter(x=>x.id!==d.id))} className="text-slate-400"><Trash2 size={14}/></button></div>))}</div>
-                </Card>
+                <Card className="animate-in"><h3 className={`font-bold flex items-center gap-2 mb-4 text-${color}-600`}>{icon} {title}</h3>
+                <form onSubmit={save} className="grid grid-cols-3 gap-2 mb-4">{fields.map(f=>(<input key={f.key} className="w-full border p-2 rounded text-sm" placeholder={f.label} value={form[f.key]} onChange={e=>setForm({...form, [f.key]:e.target.value})} required={f.req} type={f.type||'text'}/>))}<button className={`bg-${color}-600 text-white p-2 rounded font-bold`}>Add</button></form>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">{data.map(d=>(<div key={d.id} className="flex justify-between p-2 border-b"><div><div className="font-bold">{d[fields[0].key]}</div><div className="text-xs text-slate-500">{d[fields[1].key]}</div></div><button onClick={()=>setData(data.filter(x=>x.id!==d.id))} className="text-slate-400"><Trash2 size={14}/></button></div>))}</div></Card>
             )
-        }
+        };
 
-        // --- Original Components (Kept for integration) ---
+        const InventoryView = ({ inventory, setInventory }) => {
+            const [form, setForm] = useState({ name: '', qty: '', price: '' });
+            const handleSave = (e) => { e.preventDefault(); setInventory(prev => [...prev, { id: Date.now(), ...form }]); setForm({ name: '', qty: '', price: '' }); };
+            return (
+                <Card className="animate-in"><h3 className="font-bold flex gap-2 items-center mb-4"><Package size={20} className="text-orange-500"/> Inventory</h3>
+                <form onSubmit={handleSave} className="grid grid-cols-5 gap-2 mb-4"><input placeholder="Item" className="border p-2 rounded text-sm col-span-2" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required/><input type="number" placeholder="Qty" className="border p-2 rounded text-sm" value={form.qty} onChange={e=>setForm({...form, qty:e.target.value})} required/><input type="number" placeholder="Price" className="border p-2 rounded text-sm" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} required/><button className="bg-orange-500 text-white rounded font-bold text-sm">Add</button></form>
+                <div className="overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-slate-100"><tr><th className="p-2">Item</th><th className="p-2">Qty</th><th className="p-2">Value</th><th className="p-2"></th></tr></thead><tbody>{inventory.map(i=>(<tr key={i.id} className="border-b"><td className="p-2">{i.name}</td><td className="p-2">{i.qty}</td><td className="p-2">₹{i.qty*i.price}</td><td className="p-2"><button onClick={()=>setInventory(inventory.filter(x=>x.id!==i.id))} className="text-red-500"><Trash2 size={14}/></button></td></tr>))}</tbody></table></div></Card>
+            );
+        };
+
+        const TaskView = ({ tasks, setTasks }) => {
+            const [txt, setTxt] = useState('');
+            return (
+                <Card className="animate-in"><h3 className="font-bold flex items-center gap-2 mb-4"><CheckSquare size={20} className="text-emerald-500"/> Tasks</h3>
+                <div className="flex gap-2 mb-4"><input className="flex-1 border p-2 rounded" placeholder="New task..." value={txt} onChange={e=>setTxt(e.target.value)}/><button onClick={()=>{if(txt){setTasks(p=>[...p,{id:Date.now(),text:txt,done:false}]);setTxt('')}}} className="bg-emerald-600 text-white px-4 rounded font-bold">Add</button></div>
+                <div className="space-y-2">{tasks.map(t=>(<div key={t.id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded"><input type="checkbox" checked={t.done} onChange={()=>setTasks(tasks.map(x=>x.id===t.id?{...x, done:!x.done}:x))} className="w-5 h-5 accent-emerald-600"/><span className={`flex-1 ${t.done?'line-through text-slate-400':''}`}>{t.text}</span><button onClick={()=>setTasks(tasks.filter(x=>x.id!==t.id))} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button></div>))}</div></Card>
+            );
+        };
+
         const EntryFormView = ({formData, setFormData, formType, setFormType, handleSubmit, handleInputChange, projects, incomeCats, expenseCats}) => (
             <Card className="animate-in">
                 <div className="flex bg-slate-100 p-1 rounded mb-4"><button onClick={()=>setFormType('income')} className={`flex-1 py-2 rounded font-bold text-sm ${formType==='income'?'bg-white shadow text-emerald-700':'text-slate-500'}`}>Income</button><button onClick={()=>setFormType('expense')} className={`flex-1 py-2 rounded font-bold text-sm ${formType==='expense'?'bg-white shadow text-rose-700':'text-slate-500'}`}>Expense</button></div>
@@ -402,7 +402,7 @@
             </Card>
         );
 
-        const Dashboard = ({ balance, income, expense, setActiveTab }) => (
+        const Dashboard = ({ balance, income, expense, setActiveTab, enabledModules }) => (
             <div className="space-y-6 animate-in">
                 <div className="grid grid-cols-3 gap-4 text-center">
                     <div className="bg-emerald-100 p-4 rounded-xl text-emerald-800"><div className="text-xs font-bold uppercase">Income</div><div className="text-lg font-bold">₹{income.toLocaleString()}</div></div>
@@ -422,7 +422,7 @@
                         {id:'assets', label:'Assets', icon:<Monitor/>, color:'bg-slate-100 text-slate-700'},
                         {id:'attendance', label:'Staff', icon:<Clock/>, color:'bg-yellow-100 text-yellow-700'},
                         {id:'settings', label:'Settings', icon:<Settings/>, color:'bg-gray-200 text-gray-700'},
-                    ].map(btn => (
+                    ].filter(m => enabledModules[m.id]).map(btn => (
                         <button key={btn.id} onClick={()=>setActiveTab(btn.id)} className={`flex flex-col items-center justify-center p-3 rounded-xl gap-2 transition-all hover:scale-105 shadow-sm ${btn.color}`}>
                             {btn.icon} <span className="text-[10px] font-bold">{btn.label}</span>
                         </button>
@@ -433,7 +433,6 @@
 
         // --- Main App ---
         function App() {
-            const [auth, setAuth] = useState(() => sessionStorage.getItem('erp_auth') === 'true');
             const [tab, setTab] = useState('dashboard');
             
             // Data States
@@ -446,13 +445,14 @@
             const [assets, setAssets] = useState(() => JSON.parse(localStorage.getItem('erp_assets')||'[]'));
             const [attendance, setAttendance] = useState(() => JSON.parse(localStorage.getItem('erp_att')||'[]'));
             const [workers, setWorkers] = useState(() => JSON.parse(localStorage.getItem('erp_workers')||'[]'));
+            const [staffPayments, setStaffPayments] = useState(() => JSON.parse(localStorage.getItem('erp_staff_pay')||'[]'));
             
             // Config States
-            const [projects, setProjects] = useState(['General']);
+            const [projects, setProjects] = useState(() => JSON.parse(localStorage.getItem('erp_projects')||'["General"]'));
             const [incomeCats, setIncomeCats] = useState(() => JSON.parse(localStorage.getItem('erp_inc_cats')||'["Sales", "Services", "Other"]'));
             const [expenseCats, setExpenseCats] = useState(() => JSON.parse(localStorage.getItem('erp_exp_cats')||'["Purchase", "Rent", "Salary", "Fuel", "Misc"]'));
+            const [enabledModules, setEnabledModules] = useState(() => JSON.parse(localStorage.getItem('erp_modules') || JSON.stringify({entry: true, inventory: true, invoices: true, loans: true, tasks: true, contacts: true, assets: true, attendance: true, settings: true})));
 
-            // Entry Form State
             const [formType, setFormType] = useState('expense');
             const [formData, setFormData] = useState({ date: new Date().toISOString().split('T')[0], projectName: 'General', category: '', amount: '', vendor: '' });
 
@@ -466,27 +466,27 @@
             useEffect(() => { localStorage.setItem('erp_assets', JSON.stringify(assets)); }, [assets]);
             useEffect(() => { localStorage.setItem('erp_att', JSON.stringify(attendance)); }, [attendance]);
             useEffect(() => { localStorage.setItem('erp_workers', JSON.stringify(workers)); }, [workers]);
+            useEffect(() => { localStorage.setItem('erp_staff_pay', JSON.stringify(staffPayments)); }, [staffPayments]);
+            useEffect(() => { localStorage.setItem('erp_projects', JSON.stringify(projects)); }, [projects]);
             useEffect(() => { localStorage.setItem('erp_inc_cats', JSON.stringify(incomeCats)); }, [incomeCats]);
             useEffect(() => { localStorage.setItem('erp_exp_cats', JSON.stringify(expenseCats)); }, [expenseCats]);
+            useEffect(() => { localStorage.setItem('erp_modules', JSON.stringify(enabledModules)); }, [enabledModules]);
 
-            const handleLogin = () => { setAuth(true); sessionStorage.setItem('erp_auth', 'true'); };
             const handleEntrySubmit = (e) => { e.preventDefault(); setTxns([{id:Date.now(), type:formType, ...formData}, ...txns]); setFormData({...formData, amount:'', vendor:''}); alert("Saved!"); };
             const handleInputChange = (e) => setFormData({...formData, [e.target.name]: e.target.value});
+            const updateProjectName = (oldName, newName) => { setTxns(txns.map(t => t.projectName === oldName ? {...t, projectName: newName} : t)); };
 
             const income = txns.filter(t=>t.type==='income').reduce((s,t)=>s+parseFloat(t.amount),0);
             const expense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+parseFloat(t.amount),0);
 
-            if(!auth) return <LoginScreen onLogin={handleLogin}/>;
-
             return (
                 <div className="min-h-screen pb-20 md:pb-0">
-                    <header className="bg-white border-b p-4 sticky top-0 z-20 flex justify-between items-center shadow-sm">
+                    <header className="bg-white border-b p-4 sticky top-0 z-20 flex justify-between items-center shadow-sm no-print">
                         <div className="flex items-center gap-2"><div className="bg-indigo-600 text-white p-1.5 rounded"><Briefcase size={20}/></div><h1 className="font-bold text-slate-800">Business ERP</h1></div>
-                        <button onClick={()=>{setAuth(false); sessionStorage.removeItem('erp_auth')}} className="text-xs text-red-500 font-bold">Logout</button>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4">
-                        {tab === 'dashboard' && <Dashboard balance={income-expense} income={income} expense={expense} setActiveTab={setTab} />}
+                        {tab === 'dashboard' && <Dashboard balance={income-expense} income={income} expense={expense} setActiveTab={setTab} enabledModules={enabledModules} />}
                         
                         {tab === 'entry' && <EntryFormView formData={formData} setFormData={setFormData} formType={formType} setFormType={setFormType} handleSubmit={handleEntrySubmit} handleInputChange={handleInputChange} projects={projects} incomeCats={incomeCats} expenseCats={expenseCats} />}
                         
@@ -494,25 +494,27 @@
                         
                         {tab === 'invoices' && <InvoiceView invoices={invoices} setInvoices={setInvoices} contacts={contacts} />}
                         
-                        {tab === 'loans' && <LoanView loans={loans} setLoans={setLoans} contacts={contacts} />}
+                        {tab === 'loans' && <LoanView loans={loans} setLoans={setLoans} contacts={contacts} setContacts={setContacts} />}
                         
                         {tab === 'tasks' && <TaskView tasks={tasks} setTasks={setTasks} />}
                         
-                        {tab === 'contacts' && <SimpleListView title="Contacts" icon={<Users/>} data={contacts} setData={setContacts} color="pink" fields={[
-                            {key:'name', label:'Name', req:true}, {key:'phone', label:'Phone', req:true}, {key:'type', label:'Type', type:'select', opts:['Client','Vendor','Other']}
-                        ]} />}
+                        {tab === 'contacts' && <SimpleListView title="Contacts" icon={<Users/>} data={contacts} setData={setContacts} color="pink" fields={[{key:'name', label:'Name', req:true}, {key:'phone', label:'Phone', req:true}]} />}
                         
-                        {tab === 'assets' && <SimpleListView title="Fixed Assets" icon={<Monitor/>} data={assets} setData={setAssets} color="slate" fields={[
-                            {key:'name', label:'Asset Name', req:true}, {key:'val', label:'Value', type:'number', req:true}, {key:'date', label:'Purchase Date', type:'date', full:true}
-                        ]} />}
+                        {tab === 'assets' && <SimpleListView title="Fixed Assets" icon={<Monitor/>} data={assets} setData={setAssets} color="slate" fields={[{key:'name', label:'Asset Name', req:true}, {key:'val', label:'Value', type:'number', req:true}]} />}
 
-                        {tab === 'attendance' && <AttendanceView workers={workers} setWorkers={setWorkers} attendance={attendance} setAttendance={setAttendance} />}
+                        {tab === 'attendance' && <StaffView workers={workers} setWorkers={setWorkers} attendance={attendance} setAttendance={setAttendance} staffPayments={staffPayments} setStaffPayments={setStaffPayments} />}
 
-                        {tab === 'settings' && <SettingsView incomeCats={incomeCats} setIncomeCats={setIncomeCats} expenseCats={expenseCats} setExpenseCats={setExpenseCats} />}
+                        {tab === 'settings' && <SettingsView 
+                            incomeCats={incomeCats} setIncomeCats={setIncomeCats} 
+                            expenseCats={expenseCats} setExpenseCats={setExpenseCats} 
+                            enabledModules={enabledModules} setEnabledModules={setEnabledModules}
+                            projects={projects} setProjects={setProjects} updateProjectName={updateProjectName}
+                            fullData={{txns, inventory, invoices, loans, attendance, contacts, staffPayments}}
+                        />}
                     </main>
 
                     {/* Bottom Nav for Mobile */}
-                    <nav className="fixed bottom-0 w-full bg-white border-t flex justify-around p-3 md:hidden z-30">
+                    <nav className="fixed bottom-0 w-full bg-white border-t flex justify-around p-3 md:hidden z-30 no-print">
                         <button onClick={()=>setTab('dashboard')} className={`flex flex-col items-center ${tab==='dashboard'?'text-indigo-600':'text-slate-400'}`}><LayoutDashboard size={20}/><span className="text-[10px]">Home</span></button>
                         <button onClick={()=>setTab('entry')} className="bg-indigo-600 text-white p-3 rounded-full -mt-6 shadow-lg"><Plus size={24}/></button>
                         <button onClick={()=>setTab('settings')} className={`flex flex-col items-center ${tab==='settings'?'text-indigo-600':'text-slate-400'}`}><Settings size={20}/><span className="text-[10px]">Settings</span></button>
