@@ -208,7 +208,9 @@
                     {/* Bottom Nav */}
                     <div className="ios-nav fixed bottom-0 w-full max-w-2xl flex justify-around p-3 pb-6 z-40 no-print">
                         <button onClick={()=>nav('dashboard')} className={`flex flex-col items-center gap-1 ${tab==='dashboard'?'text-blue-600':'text-gray-400'}`}><Icon p={I.home} c={tab==='dashboard'?'stroke-2':'stroke-1'}/><span className="text-[10px] font-medium">Home</span></button>
+                        <button onClick={()=>nav('staff')} className={`flex flex-col items-center gap-1 ${tab==='staff'?'text-blue-600':'text-gray-400'}`}><Icon p={I.clock} c={tab==='staff'?'stroke-2':'stroke-1'}/><span className="text-[10px] font-medium">Staff</span></button>
                         <button onClick={()=>nav('entry')} className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center -mt-6 shadow-lg shadow-blue-200 ios-btn"><Icon p={I.plus}/></button>
+                        <button onClick={()=>nav('invoices')} className={`flex flex-col items-center gap-1 ${tab==='invoices'?'text-blue-600':'text-gray-400'}`}><Icon p={I.print} c={tab==='invoices'?'stroke-2':'stroke-1'}/><span className="text-[10px] font-medium">Invoices</span></button>
                         <button onClick={()=>nav('settings')} className={`flex flex-col items-center gap-1 ${tab==='settings'?'text-blue-600':'text-gray-400'}`}><Icon p={I.settings} c={tab==='settings'?'stroke-2':'stroke-1'}/><span className="text-[10px] font-medium">Settings</span></button>
                     </div>
                 </div>
@@ -634,8 +636,7 @@
         };
 
         const TaskManager = ({tasks, setTasks}) => { const [t, sT] = useState(''); return (<div className="animate-enter"><div className="ios-card"><div className="flex gap-2 mb-4"><input className="ios-input" placeholder="New Task" value={t} onChange={e=>sT(e.target.value)}/><button onClick={()=>{if(t){setTasks([...tasks,{id:Date.now(),t,d:false}]); sT('')}}} className="bg-emerald-500 text-white px-4 rounded-xl font-bold">+</button></div><div className="space-y-2">{tasks.sort((a,b)=>a.d-b.d).map(x=>(<div key={x.id} className={`p-3 rounded-xl flex items-center gap-3 transition-all ${x.d?'bg-gray-100 opacity-50':'bg-white border'}`}><input type="checkbox" checked={x.d} onChange={()=>setTasks(tasks.map(k=>k.id===x.id?{...k,d:!k.d}:k))} className="w-5 h-5 rounded-md accent-emerald-500"/><span className={x.d?'line-through':''}>{x.t}</span></div>))}</div></div></div>)};
-        const StaffManager = ({staff, setStaff}) => { const [n, sN] = useState(''); return (<div className="animate-enter"><div className="ios-card"><div className="flex gap-2 mb-4"><input placeholder="Staff Name" className="ios-input" value={n} onChange={e=>sN(e.target.value)}/><button onClick={()=>{setStaff([...staff,{id:Date.now(),name:n}]); sN('')}} className="bg-yellow-500 text-white px-4 rounded-xl">Add</button></div><div className="space-y-2">{staff.map(s=>(<div key={s.id} className="p-3 bg-gray-50 rounded-xl font-bold text-gray-700">{s.name}</div>))}</div></div></div>)};
-
+        
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
