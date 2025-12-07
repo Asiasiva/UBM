@@ -2,531 +2,642 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All-in-One Business ERP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Business ERP Pro v10</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- SheetJS for Excel Export -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     
-    <!-- Custom Styles -->
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .animate-in { animation: fadeIn 0.4s ease-out; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F2F2F7; /* iOS System Gray 6 */
+            color: #1C1C1E;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .animate-enter { animation: enter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .ios-card {
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+            padding: 20px;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .ios-input {
+            background: #F2F2F7;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 15px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .ios-input:focus {
+            background: #E5E5EA;
+            outline: none;
+        }
+
+        .ios-btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: transform 0.1s;
+        }
+        .ios-btn:active { transform: scale(0.96); }
+
+        .ios-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .details-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .details-open { max-height: 500px; }
+
         @media print {
             body * { visibility: hidden; }
-            #printable-area, #printable-area * { visibility: visible; }
-            #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+            #print-preview-modal, #print-preview-modal * { visibility: visible; }
+            #print-preview-modal { 
+                position: absolute; left: 0; top: 0; width: 100%; height: auto; 
+                background: white; z-index: 9999; padding: 0; margin: 0; overflow: visible;
+            }
             .no-print { display: none !important; }
+            @page { size: A4; margin: 10mm; }
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect } = React;
 
-        // --- Icons ---
-        const Icon = ({ children, size = 20, className = "" }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
-        );
-        const Plus = (p) => <Icon {...p}><path d="M5 12h14"/><path d="M12 5v14"/></Icon>;
-        const Trash2 = (p) => <Icon {...p}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></Icon>;
-        const LayoutDashboard = (p) => <Icon {...p}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></Icon>;
-        const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
-        const Briefcase = (p) => <Icon {...p}><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></Icon>;
-        const Edit2 = (p) => <Icon {...p}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></Icon>;
-        const Download = (p) => <Icon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
-        const Settings = (p) => <Icon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>;
-        const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
-        const Users = (p) => <Icon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
-        const Clock = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>;
-        const Package = (p) => <Icon {...p}><path d="m16.5 9.4-9-5.19"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></Icon>;
-        const CreditCard = (p) => <Icon {...p}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></Icon>;
-        const CheckSquare = (p) => <Icon {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></Icon>;
-        const Monitor = (p) => <Icon {...p}><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></Icon>;
-        const Printer = (p) => <Icon {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></Icon>;
-
-        // --- Helper Components ---
-        const Card = ({ children, className = "" }) => <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-5 ${className}`}>{children}</div>;
-        
-        // --- Invoice View ---
-        const InvoiceView = ({ invoices, setInvoices, contacts }) => {
-            const [view, setView] = useState('list');
-            const [printMode, setPrintMode] = useState(null);
-            const [inv, setInv] = useState({ client: '', items: [], date: new Date().toISOString().split('T')[0] });
-            const [lineItem, setLineItem] = useState({ desc: '', qty: 1, price: 0 });
-
-            const addItem = () => { if(lineItem.desc){ setInv(p => ({...p, items: [...p.items, lineItem]})); setLineItem({desc:'', qty:1, price:0}); } };
-            const removeItem = (idx) => { setInv(p => ({...p, items: p.items.filter((_, i) => i !== idx)})); };
-            const saveInvoice = () => { 
-                if(inv.client && inv.items.length){ 
-                    const newInv = {id: Date.now(), ...inv, total: inv.items.reduce((s,i)=>s+(i.qty*i.price),0)};
-                    setInvoices(p=>[newInv, ...p]); setView('list'); setInv({ client: '', items: [], date: new Date().toISOString().split('T')[0] }); 
-                } 
-            };
-            const handlePrint = (invoice) => { setPrintMode(invoice); setTimeout(() => { window.print(); setPrintMode(null); }, 100); }
-
-            if(printMode) {
-                return (
-                    <div id="printable-area" className="p-8 bg-white min-h-screen">
-                        <div className="flex justify-between items-start mb-8 border-b pb-4">
-                            <div><h1 className="text-3xl font-bold text-slate-800">INVOICE</h1><p className="text-slate-500">#{printMode.id}</p></div>
-                            <div className="text-right"><h2 className="font-bold text-xl">{printMode.client}</h2><p>Date: {printMode.date}</p></div>
-                        </div>
-                        <table className="w-full mb-8 border-collapse">
-                            <thead><tr className="bg-slate-100 border-b-2 border-slate-300"><th className="p-3 text-left">Item</th><th className="p-3 text-right">Qty</th><th className="p-3 text-right">Price</th><th className="p-3 text-right">Total</th></tr></thead>
-                            <tbody>{printMode.items.map((i, idx)=><tr key={idx} className="border-b"><td className="p-3">{i.desc}</td><td className="p-3 text-right">{i.qty}</td><td className="p-3 text-right">₹{i.price}</td><td className="p-3 text-right">₹{i.qty*i.price}</td></tr>)}</tbody>
-                        </table>
-                        <div className="text-right"><h2 className="text-2xl font-bold">Total: ₹{printMode.total.toLocaleString()}</h2></div>
-                        <div className="mt-12 text-center text-sm text-slate-500 border-t pt-4">Thank you for your business!</div>
-                    </div>
-                );
-            }
-
-            if(view === 'create') return (
-                <div className="space-y-4 animate-in">
-                    <Card>
-                        <div className="flex justify-between mb-4"><h3 className="font-bold">New Invoice</h3><button onClick={()=>setView('list')} className="text-sm text-slate-500">Cancel</button></div>
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                            <input className="border p-2 rounded" placeholder="Client Name" list="clients-list" value={inv.client} onChange={e=>setInv({...inv, client:e.target.value})}/>
-                            <datalist id="clients-list">{contacts.filter(c=>c.type==='Client').map(c=><option key={c.name} value={c.name}/>)}</datalist>
-                            <input type="date" className="border p-2 rounded" value={inv.date} onChange={e=>setInv({...inv, date:e.target.value})}/>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded mb-4 grid grid-cols-12 gap-2">
-                            <input placeholder="Item Desc" className="col-span-5 border p-2 rounded text-sm" value={lineItem.desc} onChange={e=>setLineItem({...lineItem, desc:e.target.value})}/>
-                            <input type="number" placeholder="Qty" className="col-span-2 border p-2 rounded text-sm" value={lineItem.qty} onChange={e=>setLineItem({...lineItem, qty:e.target.value})}/>
-                            <input type="number" placeholder="Price" className="col-span-3 border p-2 rounded text-sm" value={lineItem.price} onChange={e=>setLineItem({...lineItem, price:e.target.value})}/>
-                            <button onClick={addItem} className="col-span-2 bg-blue-600 text-white rounded font-bold text-sm">Add</button>
-                        </div>
-                        <div className="space-y-2 mb-4">
-                            {inv.items.map((i, idx)=><div key={idx} className="flex justify-between text-sm bg-slate-100 p-2 rounded items-center"><span>{i.desc} x {i.qty}</span><div className="flex gap-4"><span>₹{i.qty*i.price}</span><button onClick={()=>removeItem(idx)} className="text-red-500"><Trash2 size={14}/></button></div></div>)}
-                        </div>
-                        <div className="text-right font-bold text-xl mb-4">Total: ₹{inv.items.reduce((s,i)=>s+(i.qty*i.price),0)}</div>
-                        <button onClick={saveInvoice} className="w-full bg-green-600 text-white p-3 rounded font-bold">Generate Invoice</button>
-                    </Card>
-                </div>
-            );
-
-            return (
-                <div className="space-y-4 animate-in">
-                    <Card>
-                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold flex items-center gap-2"><FileText size={20} className="text-blue-500"/> Invoices</h3><button onClick={()=>setView('create')} className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm font-bold flex items-center gap-1"><Plus size={16}/> New</button></div>
-                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                            {invoices.map(i=>(
-                                <div key={i.id} className="p-3 border rounded flex justify-between items-center bg-white hover:bg-slate-50">
-                                    <div><div className="font-bold">{i.client}</div><div className="text-xs text-slate-500">{i.date} • #{i.id.toString().slice(-4)}</div></div>
-                                    <div className="flex items-center gap-3"><span className="font-bold text-green-700">₹{i.total}</span><button onClick={()=>handlePrint(i)} className="bg-slate-100 p-2 rounded text-slate-600 hover:bg-slate-200"><Printer size={18}/></button></div>
-                                </div>
-                            ))}
-                            {invoices.length===0 && <p className="text-center text-slate-400 py-4">No invoices yet.</p>}
-                        </div>
-                    </Card>
-                </div>
-            );
+        // Icons
+        const Icon = ({ p, c }) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c} dangerouslySetInnerHTML={{__html: p}} />;
+        const I = {
+            home: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>',
+            plus: '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>',
+            settings: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>',
+            arrowL: '<line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>',
+            trash: '<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>',
+            print: '<polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect>',
+            download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>',
+            edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>',
+            grid: '<rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>',
+            chevronD: '<polyline points="6 9 12 15 18 9"></polyline>',
+            clock: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>',
+            user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>'
         };
 
-        // --- Loans View ---
-        const LoanView = ({ loans, setLoans, contacts, setContacts }) => {
-            const [form, setForm] = useState({ name: '', amount: '', type: 'Given', date: new Date().toISOString().split('T')[0] });
-            const [newPerson, setNewPerson] = useState("");
-            const [showAddPerson, setShowAddPerson] = useState(false);
+        const formatCurrency = (n) => {
+            const num = parseFloat(n) || 0;
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(num);
+        };
 
-            const handleSave = (e) => { e.preventDefault(); setLoans(p=>[...p, {id:Date.now(), ...form}]); setForm({name:'', amount:'', type:'Given', date: new Date().toISOString().split('T')[0]}) };
+        // --- Simple Pie Chart ---
+        const SimplePieChart = ({ data, colors }) => {
+            const total = data.reduce((s, d) => s + (d.value || 0), 0);
+            if (total === 0) return <div className="text-xs text-center text-gray-400 py-4">No data to display</div>;
             
-            const addPerson = () => { if(newPerson.trim()) { setContacts(p => [...p, {id: Date.now(), name: newPerson.trim(), phone: '', type: 'Other'}]); setForm(p => ({...p, name: newPerson.trim()})); setNewPerson(""); setShowAddPerson(false); } };
-            const deletePerson = () => { if(!form.name) return; if(confirm(`Delete "${form.name}"?`)) { setContacts(p => p.filter(c => c.name !== form.name)); setForm(p => ({...p, name: ''})); } }
-
+            let currentAngle = 0;
             return (
-                <Card className="animate-in">
-                    <h3 className="font-bold flex items-center gap-2 mb-4"><CreditCard size={20} className="text-purple-500"/> Loan Tracker</h3>
-                    <form onSubmit={handleSave} className="mb-6 bg-slate-50 p-4 rounded border">
-                        <div className="flex gap-2 mb-3">
-                             <div className="flex-1 flex gap-1">
-                                <select className="flex-1 border p-2 rounded text-sm" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required>
-                                    <option value="">Select Person</option>{contacts.map(c=><option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
-                                <button type="button" onClick={() => setShowAddPerson(!showAddPerson)} className="bg-blue-100 text-blue-600 p-2 rounded"><Plus size={18}/></button>
-                                {form.name && <button type="button" onClick={deletePerson} className="bg-red-100 text-red-600 p-2 rounded"><Trash2 size={18}/></button>}
+                <div className="flex items-center justify-center gap-6">
+                    <svg viewBox="0 0 100 100" className="w-24 h-24 transform -rotate-90">
+                        {data.map((d, i) => {
+                            if (!d.value || d.value === 0) return null;
+                            const angle = (d.value / total) * 360;
+                            const isFullCircle = angle >= 359.9;
+                            const large = angle > 180 ? 1 : 0;
+                            const x1 = 50 + 50 * Math.cos(Math.PI * currentAngle / 180);
+                            const y1 = 50 + 50 * Math.sin(Math.PI * currentAngle / 180);
+                            const x2 = 50 + 50 * Math.cos(Math.PI * (currentAngle + angle) / 180);
+                            const y2 = 50 + 50 * Math.sin(Math.PI * (currentAngle + angle) / 180);
+                            
+                            const path = isFullCircle 
+                                ? "M 50 50 m -49, 0 a 49,49 0 1,0 98,0 a 49,49 0 1,0 -98,0" 
+                                : `M 50 50 L ${x1} ${y1} A 50 50 0 ${large} 1 ${x2} ${y2} Z`;
+                            
+                            currentAngle += angle;
+                            return <path key={i} d={path} fill={colors[i]} stroke="white" strokeWidth="2"/>;
+                        })}
+                    </svg>
+                    <div className="text-xs space-y-2">
+                        {data.map((d, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full shadow-sm" style={{backgroundColor: colors[i]}}></div>
+                                <span className="font-medium text-gray-600">{d.name}: {Math.round(((d.value||0)/total)*100)}%</span>
                             </div>
-                        </div>
-                        {showAddPerson && (
-                            <div className="flex gap-2 mb-3 animate-in"><input placeholder="Enter Name" className="flex-1 border p-2 rounded text-sm" value={newPerson} onChange={e=>setNewPerson(e.target.value)} autoFocus/><button type="button" onClick={addPerson} className="bg-blue-600 text-white px-4 rounded text-xs font-bold">Save</button></div>
-                        )}
-                        <div className="grid grid-cols-2 gap-3 mb-3">
-                            <input type="number" placeholder="Amount" className="border p-2 rounded text-sm" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})} required/>
-                            <select className="border p-2 rounded text-sm" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}><option value="Given">Given</option><option value="Taken">Taken</option></select>
-                        </div>
-                        <button className="w-full bg-purple-600 text-white p-2 rounded text-sm font-bold">Save Record</button>
-                    </form>
-                    <div className="space-y-2 max-h-[350px] overflow-y-auto">
-                        {loans.map(l=>(<div key={l.id} className="flex justify-between items-center p-3 border-b hover:bg-slate-50"><div><div className="font-bold">{l.name}</div><div className="text-xs text-slate-500">{l.date}</div></div><div className={`font-bold ${l.type==='Given'?'text-red-500':'text-green-500'}`}>{l.type==='Given'?'Receivable':'Payable'} ₹{l.amount}</div><button onClick={()=>setLoans(loans.filter(x=>x.id!==l.id))} className="text-slate-400 hover:text-red-500"><Trash2 size={14}/></button></div>))}
-                        {loans.length === 0 && <p className="text-center text-slate-400 py-4">No active loans.</p>}
-                    </div>
-                </Card>
-            )
-        }
-
-        // --- NEW: Settings View (Project Management Added) ---
-        const SettingsView = ({ 
-            incomeCats, setIncomeCats, expenseCats, setExpenseCats, 
-            enabledModules, setEnabledModules, projects, setProjects, fullData, updateProjectName 
-        }) => {
-            const [newItem, setNewItem] = useState("");
-            const [section, setSection] = useState('projects'); // projects, categories, modules, data
-            
-            // Project Management State
-            const [newProj, setNewProj] = useState("");
-            const [editProj, setEditProj] = useState({ idx: -1, val: "" });
-
-            const handleAddCat = (type) => { if(!newItem.trim()) return; if(type === 'income') setIncomeCats([...incomeCats, newItem.trim()]); else setExpenseCats([...expenseCats, newItem.trim()]); setNewItem(""); };
-            const handleDeleteCat = (idx, type) => { if(confirm("Delete category?")) { if(type === 'income') setIncomeCats(incomeCats.filter((_, i) => i !== idx)); else setExpenseCats(expenseCats.filter((_, i) => i !== idx)); } };
-            
-            const handleAddProj = () => { if(newProj.trim() && !projects.includes(newProj.trim())) { setProjects([...projects, newProj.trim()]); setNewProj(""); } };
-            const handleEditProj = (idx) => { if(editProj.val.trim() && !projects.includes(editProj.val.trim())) { updateProjectName(projects[idx], editProj.val.trim()); const p = [...projects]; p[idx] = editProj.val.trim(); setProjects(p); setEditProj({idx:-1, val:""}); } };
-            const handleDeleteProj = (idx) => { if(confirm("Delete project?")) { setProjects(projects.filter((_, i) => i !== idx)); } };
-
-            const downloadAllData = () => {
-                const wb = XLSX.utils.book_new();
-                if(fullData.txns.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.txns), "Transactions");
-                if(fullData.staffPayments.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.staffPayments), "Staff_Payments");
-                if(fullData.inventory.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.inventory), "Inventory");
-                if(fullData.invoices.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.invoices.map(i=>({id:i.id, date:i.date, client:i.client, total:i.total}))), "Invoices");
-                if(fullData.loans.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.loans), "Loans");
-                if(fullData.attendance.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.attendance), "Attendance");
-                if(fullData.contacts.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullData.contacts), "Contacts");
-                XLSX.writeFile(wb, "Full_Business_Data.xlsx");
-            };
-
-            return (
-                <div className="space-y-6 animate-in">
-                    <div className="flex bg-white p-1 rounded-lg border shadow-sm overflow-x-auto">
-                        {['projects', 'categories', 'modules', 'data'].map(s => (
-                            <button key={s} onClick={()=>setSection(s)} className={`flex-1 min-w-[80px] py-2 text-sm font-bold capitalize rounded-md ${section===s ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`}>{s}</button>
                         ))}
                     </div>
-
-                    {section === 'projects' && (
-                        <Card>
-                            <h3 className="font-bold mb-4">Manage Project Names</h3>
-                            <div className="flex gap-2 mb-4">
-                                <input value={newProj} onChange={e=>setNewProj(e.target.value)} placeholder="New Project Name" className="flex-1 border p-2 rounded text-sm"/>
-                                <button onClick={handleAddProj} className="bg-indigo-600 text-white px-4 rounded font-bold text-sm">Add</button>
-                            </div>
-                            <div className="space-y-2">
-                                {projects.map((p, i)=>(
-                                    <div key={i} className="flex justify-between items-center bg-slate-50 p-2 rounded border">
-                                        {editProj.idx === i ? (
-                                            <div className="flex-1 flex gap-2"><input value={editProj.val} onChange={e=>setEditProj({...editProj, val:e.target.value})} className="flex-1 border p-1 rounded text-sm"/><button onClick={()=>handleEditProj(i)} className="text-green-600 text-xs font-bold">Save</button></div>
-                                        ) : (
-                                            <span className="font-medium text-sm">{p}</span>
-                                        )}
-                                        {editProj.idx !== i && <div className="flex gap-2">
-                                            <button onClick={()=>setEditProj({idx:i, val:p})} className="text-blue-500"><Edit2 size={16}/></button>
-                                            <button onClick={()=>handleDeleteProj(i)} className="text-red-500"><Trash2 size={16}/></button>
-                                        </div>}
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-                    )}
-
-                    {section === 'categories' && (
-                        <Card>
-                            <h3 className="font-bold mb-4">Income Categories</h3>
-                            <div className="flex gap-2 mb-4"><input id="newInc" placeholder="New Income Cat" className="flex-1 border p-2 rounded text-sm"/><button onClick={()=>{setNewItem(document.getElementById('newInc').value); handleAddCat('income'); document.getElementById('newInc').value=''}} className="bg-emerald-600 text-white px-3 rounded text-sm">Add</button></div>
-                            <div className="flex flex-wrap gap-2 mb-6">{incomeCats.map((c, i)=>(<div key={i} className="bg-emerald-50 px-2 py-1 rounded text-xs border border-emerald-200 flex items-center gap-1">{c} <button onClick={()=>handleDeleteCat(i, 'income')}><X size={12}/></button></div>))}</div>
-                            
-                            <h3 className="font-bold mb-4">Expense Categories</h3>
-                            <div className="flex gap-2 mb-4"><input id="newExp" placeholder="New Expense Cat" className="flex-1 border p-2 rounded text-sm"/><button onClick={()=>{setNewItem(document.getElementById('newExp').value); handleAddCat('expense'); document.getElementById('newExp').value=''}} className="bg-rose-600 text-white px-3 rounded text-sm">Add</button></div>
-                            <div className="flex flex-wrap gap-2">{expenseCats.map((c, i)=>(<div key={i} className="bg-rose-50 px-2 py-1 rounded text-xs border border-rose-200 flex items-center gap-1">{c} <button onClick={()=>handleDeleteCat(i, 'expense')}><X size={12}/></button></div>))}</div>
-                        </Card>
-                    )}
-
-                    {section === 'modules' && (
-                        <Card>
-                            <h3 className="font-bold mb-4">Dashboard Quick Access</h3>
-                            <div className="grid grid-cols-2 gap-3">
-                                {Object.keys(enabledModules).map(key => (
-                                    <label key={key} className="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-slate-50">
-                                        <input type="checkbox" checked={enabledModules[key]} onChange={()=>setEnabledModules({...enabledModules, [key]: !enabledModules[key]})} className="w-5 h-5 accent-indigo-600"/>
-                                        <span className="capitalize font-medium">{key}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </Card>
-                    )}
-
-                    {section === 'data' && (
-                        <Card>
-                            <h3 className="font-bold mb-4">Data Management</h3>
-                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4">
-                                <h4 className="font-bold text-blue-800 mb-1">Download Full Backup</h4>
-                                <p className="text-xs text-blue-600 mb-3">Download everything (Entries, Staff, Stock, Invoices) in one Excel file.</p>
-                                <button onClick={downloadAllData} className="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm flex items-center gap-2"><Download size={16}/> Download Excel</button>
-                            </div>
-                        </Card>
-                    )}
-                </div>
-            )
-        }
-
-        // --- IMPROVED: Staff View (Attendance + Payments) ---
-        const StaffView = ({ workers, setWorkers, attendance, setAttendance, staffPayments, setStaffPayments }) => {
-            const [view, setView] = useState('list'); // list, mark, pay
-            const [entry, setEntry] = useState({ date: new Date().toISOString().split('T')[0], workerId: '', units: '1', unitType: 'Day' });
-            const [payForm, setPayForm] = useState({ date: new Date().toISOString().split('T')[0], workerId: '', amount: '', type: 'Salary' }); // Salary or Advance
-            const [newWorker, setNewWorker] = useState("");
-
-            const saveAttendance = (e) => {
-                e.preventDefault(); const w = workers.find(x=>x.id==entry.workerId); if(!w)return;
-                const pay = w.rate ? w.rate * entry.units : 0;
-                setAttendance(p=>[{id:Date.now(), ...entry, workerName: w.name, pay}, ...p]);
-                alert("Marked!");
-            };
-
-            const savePayment = (e) => {
-                e.preventDefault(); const w = workers.find(x=>x.id==payForm.workerId); if(!w)return;
-                setStaffPayments(p=>[{id:Date.now(), ...payForm, workerName: w.name}, ...p]);
-                alert("Payment Recorded!");
-            };
-
-            const getStaffBalance = (wId) => {
-                const earned = attendance.filter(a=>a.workerId == wId).reduce((s,a)=>s+(a.pay||0),0);
-                const paid = staffPayments.filter(p=>p.workerId == wId).reduce((s,p)=>s+parseFloat(p.amount),0);
-                return earned - paid;
-            }
-
-            return (
-                <div className="space-y-4 animate-in">
-                    <div className="flex bg-white p-1 rounded shadow-sm border">
-                        {['list','mark','pay'].map(v=>(<button key={v} onClick={()=>setView(v)} className={`flex-1 py-2 text-sm font-bold capitalize rounded ${view===v?'bg-yellow-100 text-yellow-800':'text-slate-500'}`}>{v}</button>))}
-                    </div>
-
-                    {view === 'list' && (
-                        <Card>
-                            <div className="flex gap-2 mb-4"><input placeholder="New Staff Name" className="border p-2 rounded text-sm flex-1" value={newWorker} onChange={e=>setNewWorker(e.target.value)}/><button onClick={()=>{if(newWorker){setWorkers(p=>[...p,{id:Date.now(), name:newWorker, rate:500}]); setNewWorker('')}}} className="bg-yellow-600 text-white px-3 rounded text-sm">Add</button></div>
-                            <div className="space-y-2">
-                                {workers.map(w => {
-                                    const bal = getStaffBalance(w.id);
-                                    return (
-                                        <div key={w.id} className="p-3 border rounded flex justify-between items-center">
-                                            <div><div className="font-bold">{w.name}</div><div className="text-xs text-slate-500">Rate: ₹{w.rate}</div></div>
-                                            <div className="text-right"><div className="text-xs text-slate-400">Balance Due</div><div className={`font-bold ${bal>0?'text-red-500':'text-green-500'}`}>₹{bal}</div></div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </Card>
-                    )}
-
-                    {view === 'mark' && (
-                        <Card><h3 className="font-bold mb-4">Mark Attendance (Work)</h3>
-                        <form onSubmit={saveAttendance} className="grid grid-cols-1 gap-3">
-                            <input type="date" value={entry.date} onChange={e=>setEntry({...entry, date:e.target.value})} className="border p-2 rounded"/>
-                            <select value={entry.workerId} onChange={e=>setEntry({...entry, workerId:e.target.value})} className="border p-2 rounded" required><option value="">Select Staff</option>{workers.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select>
-                            <div className="flex gap-2"><input type="number" step="0.5" value={entry.units} onChange={e=>setEntry({...entry, units:e.target.value})} className="border p-2 rounded flex-1"/><select value={entry.unitType} onChange={e=>setEntry({...entry, unitType:e.target.value})} className="border p-2 rounded"><option>Day</option><option>Hour</option></select></div>
-                            <button className="bg-blue-600 text-white p-2 rounded font-bold">Save Work Record</button>
-                        </form></Card>
-                    )}
-
-                    {view === 'pay' && (
-                        <Card><h3 className="font-bold mb-4 text-green-700">Staff Payment (Give Money)</h3>
-                        <form onSubmit={savePayment} className="grid grid-cols-1 gap-3">
-                            <input type="date" value={payForm.date} onChange={e=>setPayForm({...payForm, date:e.target.value})} className="border p-2 rounded"/>
-                            <select value={payForm.workerId} onChange={e=>setPayForm({...payForm, workerId:e.target.value})} className="border p-2 rounded" required><option value="">Select Staff</option>{workers.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select>
-                            <input type="number" placeholder="Amount Given" value={payForm.amount} onChange={e=>setPayForm({...payForm, amount:e.target.value})} className="border p-2 rounded" required/>
-                            <select value={payForm.type} onChange={e=>setPayForm({...payForm, type:e.target.value})} className="border p-2 rounded"><option>Salary</option><option>Advance</option></select>
-                            <button className="bg-green-600 text-white p-2 rounded font-bold">Record Payment</button>
-                        </form></Card>
-                    )}
                 </div>
             );
         };
 
-        const SimpleListView = ({ title, icon, data, setData, fields, color }) => {
-            const [form, setForm] = useState(fields.reduce((acc, f) => ({...acc, [f.key]: ''}), {}));
-            const save = (e) => { e.preventDefault(); setData(p=>[...p, {id:Date.now(), ...form}]); setForm(fields.reduce((acc, f) => ({...acc, [f.key]: ''}), {})); };
-            return (
-                <Card className="animate-in"><h3 className={`font-bold flex items-center gap-2 mb-4 text-${color}-600`}>{icon} {title}</h3>
-                <form onSubmit={save} className="grid grid-cols-3 gap-2 mb-4">{fields.map(f=>(<input key={f.key} className="w-full border p-2 rounded text-sm" placeholder={f.label} value={form[f.key]} onChange={e=>setForm({...form, [f.key]:e.target.value})} required={f.req} type={f.type||'text'}/>))}<button className={`bg-${color}-600 text-white p-2 rounded font-bold`}>Add</button></form>
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">{data.map(d=>(<div key={d.id} className="flex justify-between p-2 border-b"><div><div className="font-bold">{d[fields[0].key]}</div><div className="text-xs text-slate-500">{d[fields[1].key]}</div></div><button onClick={()=>setData(data.filter(x=>x.id!==d.id))} className="text-slate-400"><Trash2 size={14}/></button></div>))}</div></Card>
-            )
-        };
-
-        const InventoryView = ({ inventory, setInventory }) => {
-            const [form, setForm] = useState({ name: '', qty: '', price: '' });
-            const handleSave = (e) => { e.preventDefault(); setInventory(prev => [...prev, { id: Date.now(), ...form }]); setForm({ name: '', qty: '', price: '' }); };
-            return (
-                <Card className="animate-in"><h3 className="font-bold flex gap-2 items-center mb-4"><Package size={20} className="text-orange-500"/> Inventory</h3>
-                <form onSubmit={handleSave} className="grid grid-cols-5 gap-2 mb-4"><input placeholder="Item" className="border p-2 rounded text-sm col-span-2" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required/><input type="number" placeholder="Qty" className="border p-2 rounded text-sm" value={form.qty} onChange={e=>setForm({...form, qty:e.target.value})} required/><input type="number" placeholder="Price" className="border p-2 rounded text-sm" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} required/><button className="bg-orange-500 text-white rounded font-bold text-sm">Add</button></form>
-                <div className="overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-slate-100"><tr><th className="p-2">Item</th><th className="p-2">Qty</th><th className="p-2">Value</th><th className="p-2"></th></tr></thead><tbody>{inventory.map(i=>(<tr key={i.id} className="border-b"><td className="p-2">{i.name}</td><td className="p-2">{i.qty}</td><td className="p-2">₹{i.qty*i.price}</td><td className="p-2"><button onClick={()=>setInventory(inventory.filter(x=>x.id!==i.id))} className="text-red-500"><Trash2 size={14}/></button></td></tr>))}</tbody></table></div></Card>
-            );
-        };
-
-        const TaskView = ({ tasks, setTasks }) => {
-            const [txt, setTxt] = useState('');
-            return (
-                <Card className="animate-in"><h3 className="font-bold flex items-center gap-2 mb-4"><CheckSquare size={20} className="text-emerald-500"/> Tasks</h3>
-                <div className="flex gap-2 mb-4"><input className="flex-1 border p-2 rounded" placeholder="New task..." value={txt} onChange={e=>setTxt(e.target.value)}/><button onClick={()=>{if(txt){setTasks(p=>[...p,{id:Date.now(),text:txt,done:false}]);setTxt('')}}} className="bg-emerald-600 text-white px-4 rounded font-bold">Add</button></div>
-                <div className="space-y-2">{tasks.map(t=>(<div key={t.id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded"><input type="checkbox" checked={t.done} onChange={()=>setTasks(tasks.map(x=>x.id===t.id?{...x, done:!x.done}:x))} className="w-5 h-5 accent-emerald-600"/><span className={`flex-1 ${t.done?'line-through text-slate-400':''}`}>{t.text}</span><button onClick={()=>setTasks(tasks.filter(x=>x.id!==t.id))} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button></div>))}</div></Card>
-            );
-        };
-
-        const EntryFormView = ({formData, setFormData, formType, setFormType, handleSubmit, handleInputChange, projects, incomeCats, expenseCats}) => (
-            <Card className="animate-in">
-                <div className="flex bg-slate-100 p-1 rounded mb-4"><button onClick={()=>setFormType('income')} className={`flex-1 py-2 rounded font-bold text-sm ${formType==='income'?'bg-white shadow text-emerald-700':'text-slate-500'}`}>Income</button><button onClick={()=>setFormType('expense')} className={`flex-1 py-2 rounded font-bold text-sm ${formType==='expense'?'bg-white shadow text-rose-700':'text-slate-500'}`}>Expense</button></div>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3"><input type="date" name="date" value={formData.date} onChange={handleInputChange} className="border p-2 rounded w-full"/><input type="number" name="amount" value={formData.amount} onChange={handleInputChange} placeholder="Amount" className="border p-2 rounded w-full font-bold" required/></div>
-                    <select name="category" value={formData.category} onChange={handleInputChange} className="border p-2 rounded w-full" required><option value="">Category</option>{(formType==='income'?incomeCats:expenseCats).map(c=><option key={c} value={c}>{c}</option>)}</select>
-                    <select name="projectName" value={formData.projectName} onChange={handleInputChange} className="border p-2 rounded w-full"><option value="General">General Account</option>{projects.map(p=><option key={p} value={p}>{p}</option>)}</select>
-                    <input name="vendor" value={formData.vendor} onChange={handleInputChange} placeholder="Notes / Vendor" className="border p-2 rounded w-full"/>
-                    <button className={`w-full py-3 rounded text-white font-bold ${formType==='income'?'bg-emerald-600':'bg-rose-600'}`}>Save Transaction</button>
-                </form>
-            </Card>
-        );
-
-        const Dashboard = ({ balance, income, expense, setActiveTab, enabledModules }) => (
-            <div className="space-y-6 animate-in">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="bg-emerald-100 p-4 rounded-xl text-emerald-800"><div className="text-xs font-bold uppercase">Income</div><div className="text-lg font-bold">₹{income.toLocaleString()}</div></div>
-                    <div className="bg-rose-100 p-4 rounded-xl text-rose-800"><div className="text-xs font-bold uppercase">Expense</div><div className="text-lg font-bold">₹{expense.toLocaleString()}</div></div>
-                    <div className="bg-blue-100 p-4 rounded-xl text-blue-800"><div className="text-xs font-bold uppercase">Balance</div><div className="text-lg font-bold">₹{balance.toLocaleString()}</div></div>
-                </div>
-                
-                <h3 className="font-bold text-slate-700">Quick Access</h3>
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
-                    {[
-                        {id:'entry', label:'Entry', icon:<Plus/>, color:'bg-blue-600 text-white'},
-                        {id:'inventory', label:'Stock', icon:<Package/>, color:'bg-orange-100 text-orange-700'},
-                        {id:'invoices', label:'Invoices', icon:<FileText/>, color:'bg-indigo-100 text-indigo-700'},
-                        {id:'loans', label:'Loans', icon:<CreditCard/>, color:'bg-purple-100 text-purple-700'},
-                        {id:'tasks', label:'Tasks', icon:<CheckSquare/>, color:'bg-emerald-100 text-emerald-700'},
-                        {id:'contacts', label:'Contacts', icon:<Users/>, color:'bg-pink-100 text-pink-700'},
-                        {id:'assets', label:'Assets', icon:<Monitor/>, color:'bg-slate-100 text-slate-700'},
-                        {id:'attendance', label:'Staff', icon:<Clock/>, color:'bg-yellow-100 text-yellow-700'},
-                        {id:'settings', label:'Settings', icon:<Settings/>, color:'bg-gray-200 text-gray-700'},
-                    ].filter(m => enabledModules[m.id]).map(btn => (
-                        <button key={btn.id} onClick={()=>setActiveTab(btn.id)} className={`flex flex-col items-center justify-center p-3 rounded-xl gap-2 transition-all hover:scale-105 shadow-sm ${btn.color}`}>
-                            {btn.icon} <span className="text-[10px] font-bold">{btn.label}</span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-        );
-
-        // --- Main App ---
         function App() {
             const [tab, setTab] = useState('dashboard');
-            
+            const [history, setHistory] = useState(['dashboard']);
+
             // Data States
             const [txns, setTxns] = useState(() => JSON.parse(localStorage.getItem('erp_txns')||'[]'));
             const [inventory, setInventory] = useState(() => JSON.parse(localStorage.getItem('erp_inv')||'[]'));
             const [invoices, setInvoices] = useState(() => JSON.parse(localStorage.getItem('erp_bills')||'[]'));
+            const [invoiceItems, setInvoiceItems] = useState(() => JSON.parse(localStorage.getItem('erp_inv_items')||'[]'));
             const [loans, setLoans] = useState(() => JSON.parse(localStorage.getItem('erp_loans')||'[]'));
-            const [tasks, setTasks] = useState(() => JSON.parse(localStorage.getItem('erp_tasks')||'[]'));
             const [contacts, setContacts] = useState(() => JSON.parse(localStorage.getItem('erp_contacts')||'[]'));
-            const [assets, setAssets] = useState(() => JSON.parse(localStorage.getItem('erp_assets')||'[]'));
-            const [attendance, setAttendance] = useState(() => JSON.parse(localStorage.getItem('erp_att')||'[]'));
-            const [workers, setWorkers] = useState(() => JSON.parse(localStorage.getItem('erp_workers')||'[]'));
-            const [staffPayments, setStaffPayments] = useState(() => JSON.parse(localStorage.getItem('erp_staff_pay')||'[]'));
             
-            // Config States
+            // Updated Staff Data Structure
+            const [staff, setStaff] = useState(() => JSON.parse(localStorage.getItem('erp_staff')||'[]'));
+            const [attendance, setAttendance] = useState(() => JSON.parse(localStorage.getItem('erp_att')||'[]'));
+            const [staffPayments, setStaffPayments] = useState(() => JSON.parse(localStorage.getItem('erp_staff_pay')||'[]'));
+
+            const [tasks, setTasks] = useState(() => JSON.parse(localStorage.getItem('erp_tasks')||'[]'));
+            const [company, setCompany] = useState(() => JSON.parse(localStorage.getItem('erp_company')||'{"name":"My Business"}'));
             const [projects, setProjects] = useState(() => JSON.parse(localStorage.getItem('erp_projects')||'["General"]'));
-            const [incomeCats, setIncomeCats] = useState(() => JSON.parse(localStorage.getItem('erp_inc_cats')||'["Sales", "Services", "Other"]'));
-            const [expenseCats, setExpenseCats] = useState(() => JSON.parse(localStorage.getItem('erp_exp_cats')||'["Purchase", "Rent", "Salary", "Fuel", "Misc"]'));
-            const [enabledModules, setEnabledModules] = useState(() => JSON.parse(localStorage.getItem('erp_modules') || JSON.stringify({entry: true, inventory: true, invoices: true, loans: true, tasks: true, contacts: true, assets: true, attendance: true, settings: true})));
+            const [cats, setCats] = useState(() => JSON.parse(localStorage.getItem('erp_cats')||'{"inc":["Sales"], "exp":["Purchase"]}'));
+            const [modules, setModules] = useState(() => JSON.parse(localStorage.getItem('erp_modules')||'{"entry":true,"invoices":true,"inventory":true,"loans":true,"contacts":true,"staff":true}'));
 
-            const [formType, setFormType] = useState('expense');
-            const [formData, setFormData] = useState({ date: new Date().toISOString().split('T')[0], projectName: 'General', category: '', amount: '', vendor: '' });
+            // Persist
+            useEffect(() => {
+                const store = {erp_txns:txns, erp_inv:inventory, erp_bills:invoices, erp_inv_items:invoiceItems, erp_loans:loans, erp_contacts:contacts, erp_staff:staff, erp_att:attendance, erp_staff_pay:staffPayments, erp_tasks:tasks, erp_company:company, erp_projects:projects, erp_cats:cats, erp_modules:modules};
+                Object.keys(store).forEach(k => localStorage.setItem(k, JSON.stringify(store[k])));
+            }, [txns, inventory, invoices, invoiceItems, loans, contacts, staff, attendance, staffPayments, tasks, company, projects, cats, modules]);
 
-            // Persist Data
-            useEffect(() => { localStorage.setItem('erp_txns', JSON.stringify(txns)); }, [txns]);
-            useEffect(() => { localStorage.setItem('erp_inv', JSON.stringify(inventory)); }, [inventory]);
-            useEffect(() => { localStorage.setItem('erp_bills', JSON.stringify(invoices)); }, [invoices]);
-            useEffect(() => { localStorage.setItem('erp_loans', JSON.stringify(loans)); }, [loans]);
-            useEffect(() => { localStorage.setItem('erp_tasks', JSON.stringify(tasks)); }, [tasks]);
-            useEffect(() => { localStorage.setItem('erp_contacts', JSON.stringify(contacts)); }, [contacts]);
-            useEffect(() => { localStorage.setItem('erp_assets', JSON.stringify(assets)); }, [assets]);
-            useEffect(() => { localStorage.setItem('erp_att', JSON.stringify(attendance)); }, [attendance]);
-            useEffect(() => { localStorage.setItem('erp_workers', JSON.stringify(workers)); }, [workers]);
-            useEffect(() => { localStorage.setItem('erp_staff_pay', JSON.stringify(staffPayments)); }, [staffPayments]);
-            useEffect(() => { localStorage.setItem('erp_projects', JSON.stringify(projects)); }, [projects]);
-            useEffect(() => { localStorage.setItem('erp_inc_cats', JSON.stringify(incomeCats)); }, [incomeCats]);
-            useEffect(() => { localStorage.setItem('erp_exp_cats', JSON.stringify(expenseCats)); }, [expenseCats]);
-            useEffect(() => { localStorage.setItem('erp_modules', JSON.stringify(enabledModules)); }, [enabledModules]);
-
-            const handleEntrySubmit = (e) => { e.preventDefault(); setTxns([{id:Date.now(), type:formType, ...formData}, ...txns]); setFormData({...formData, amount:'', vendor:''}); alert("Saved!"); };
-            const handleInputChange = (e) => setFormData({...formData, [e.target.name]: e.target.value});
-            const updateProjectName = (oldName, newName) => { setTxns(txns.map(t => t.projectName === oldName ? {...t, projectName: newName} : t)); };
-
-            const income = txns.filter(t=>t.type==='income').reduce((s,t)=>s+parseFloat(t.amount),0);
-            const expense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+parseFloat(t.amount),0);
+            const nav = (t) => { if(tab!==t) { setHistory([...history, t]); setTab(t); window.scrollTo(0,0); } };
+            const back = () => { if(history.length>1) { const h=[...history]; h.pop(); setHistory(h); setTab(h[h.length-1]); } };
 
             return (
-                <div className="min-h-screen pb-20 md:pb-0">
-                    <header className="bg-white border-b p-4 sticky top-0 z-20 flex justify-between items-center shadow-sm no-print">
-                        <div className="flex items-center gap-2"><div className="bg-indigo-600 text-white p-1.5 rounded"><Briefcase size={20}/></div><h1 className="font-bold text-slate-800">Business ERP</h1></div>
-                    </header>
+                <div className="max-w-2xl mx-auto min-h-screen pb-24">
+                    {/* Header */}
+                    <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center justify-between no-print">
+                        <div className="flex items-center gap-3">
+                            {history.length > 1 && <button onClick={back} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"><Icon p={I.arrowL}/></button>}
+                            <h1 className="font-bold text-xl text-gray-900 tracking-tight">Business ERP</h1>
+                        </div>
+                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">v10</div>
+                    </div>
 
-                    <main className="max-w-4xl mx-auto p-4">
-                        {tab === 'dashboard' && <Dashboard balance={income-expense} income={income} expense={expense} setActiveTab={setTab} enabledModules={enabledModules} />}
-                        
-                        {tab === 'entry' && <EntryFormView formData={formData} setFormData={setFormData} formType={formType} setFormType={setFormType} handleSubmit={handleEntrySubmit} handleInputChange={handleInputChange} projects={projects} incomeCats={incomeCats} expenseCats={expenseCats} />}
-                        
-                        {tab === 'inventory' && <InventoryView inventory={inventory} setInventory={setInventory} />}
-                        
-                        {tab === 'invoices' && <InvoiceView invoices={invoices} setInvoices={setInvoices} contacts={contacts} />}
-                        
-                        {tab === 'loans' && <LoanView loans={loans} setLoans={setLoans} contacts={contacts} setContacts={setContacts} />}
-                        
-                        {tab === 'tasks' && <TaskView tasks={tasks} setTasks={setTasks} />}
-                        
-                        {tab === 'contacts' && <SimpleListView title="Contacts" icon={<Users/>} data={contacts} setData={setContacts} color="pink" fields={[{key:'name', label:'Name', req:true}, {key:'phone', label:'Phone', req:true}]} />}
-                        
-                        {tab === 'assets' && <SimpleListView title="Fixed Assets" icon={<Monitor/>} data={assets} setData={setAssets} color="slate" fields={[{key:'name', label:'Asset Name', req:true}, {key:'val', label:'Value', type:'number', req:true}]} />}
+                    <div className="p-4 space-y-4">
+                        {tab === 'dashboard' && <Dashboard txns={txns} nav={nav} modules={modules} />}
+                        {tab === 'entry' && <EntryManager txns={txns} setTxns={setTxns} cats={cats} projects={projects} />}
+                        {tab === 'invoices' && <InvoiceManager invoices={invoices} setInvoices={setInvoices} company={company} contacts={contacts} items={invoiceItems} setItems={setInvoiceItems} />}
+                        {tab === 'inventory' && <InventoryManager inventory={inventory} setInventory={setInventory} />}
+                        {tab === 'loans' && <LoanManager loans={loans} setLoans={setLoans} contacts={contacts} />}
+                        {tab === 'contacts' && <ContactManager contacts={contacts} setContacts={setContacts} />}
+                        {tab === 'staff' && <AdvancedStaffManager staff={staff} setStaff={setStaff} attendance={attendance} setAttendance={setAttendance} payments={staffPayments} setPayments={setStaffPayments} />}
+                        {tab === 'tasks' && <TaskManager tasks={tasks} setTasks={setTasks} />}
+                        {tab === 'settings' && <SettingsManager company={company} setCompany={setCompany} projects={projects} setProjects={setProjects} cats={cats} setCats={setCats} modules={modules} setModules={setModules} fullData={{txns, inventory, invoices, loans, contacts}} />}
+                    </div>
 
-                        {tab === 'attendance' && <StaffView workers={workers} setWorkers={setWorkers} attendance={attendance} setAttendance={setAttendance} staffPayments={staffPayments} setStaffPayments={setStaffPayments} />}
-
-                        {tab === 'settings' && <SettingsView 
-                            incomeCats={incomeCats} setIncomeCats={setIncomeCats} 
-                            expenseCats={expenseCats} setExpenseCats={setExpenseCats} 
-                            enabledModules={enabledModules} setEnabledModules={setEnabledModules}
-                            projects={projects} setProjects={setProjects} updateProjectName={updateProjectName}
-                            fullData={{txns, inventory, invoices, loans, attendance, contacts, staffPayments}}
-                        />}
-                    </main>
-
-                    {/* Bottom Nav for Mobile */}
-                    <nav className="fixed bottom-0 w-full bg-white border-t flex justify-around p-3 md:hidden z-30 no-print">
-                        <button onClick={()=>setTab('dashboard')} className={`flex flex-col items-center ${tab==='dashboard'?'text-indigo-600':'text-slate-400'}`}><LayoutDashboard size={20}/><span className="text-[10px]">Home</span></button>
-                        <button onClick={()=>setTab('entry')} className="bg-indigo-600 text-white p-3 rounded-full -mt-6 shadow-lg"><Plus size={24}/></button>
-                        <button onClick={()=>setTab('settings')} className={`flex flex-col items-center ${tab==='settings'?'text-indigo-600':'text-slate-400'}`}><Settings size={20}/><span className="text-[10px]">Settings</span></button>
-                    </nav>
+                    {/* Bottom Nav */}
+                    <div className="ios-nav fixed bottom-0 w-full max-w-2xl flex justify-around p-3 pb-6 z-40 no-print">
+                        <button onClick={()=>nav('dashboard')} className={`flex flex-col items-center gap-1 ${tab==='dashboard'?'text-blue-600':'text-gray-400'}`}><Icon p={I.home} c={tab==='dashboard'?'stroke-2':'stroke-1'}/><span className="text-[10px] font-medium">Home</span></button>
+                        <button onClick={()=>nav('entry')} className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center -mt-6 shadow-lg shadow-blue-200 ios-btn"><Icon p={I.plus}/></button>
+                        <button onClick={()=>nav('settings')} className={`flex flex-col items-center gap-1 ${tab==='settings'?'text-blue-600':'text-gray-400'}`}><Icon p={I.settings} c={tab==='settings'?'stroke-2':'stroke-1'}/><span className="text-[10px] font-medium">Settings</span></button>
+                    </div>
                 </div>
             );
         }
+
+        // --- DASHBOARD ---
+        const Dashboard = ({ txns, nav, modules }) => {
+            const inc = txns.filter(t=>t.type==='inc').reduce((s,t)=>s+(parseFloat(t.amt)||0),0);
+            const exp = txns.filter(t=>t.type==='exp').reduce((s,t)=>s+(parseFloat(t.amt)||0),0);
+            const pieData = [{name: 'Income', value: inc}, {name: 'Expense', value: exp}];
+            
+            return (
+                <div className="animate-enter space-y-5">
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="ios-card !p-3 text-center bg-white"><div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Income</div><div className="text-sm font-bold text-emerald-600">{formatCurrency(inc)}</div></div>
+                        <div className="ios-card !p-3 text-center bg-white"><div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Expense</div><div className="text-sm font-bold text-rose-600">{formatCurrency(exp)}</div></div>
+                        <div className="ios-card !p-3 text-center bg-white"><div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Balance</div><div className="text-sm font-bold text-blue-600">{formatCurrency(inc-exp)}</div></div>
+                    </div>
+
+                    <div className="ios-card">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase mb-4 text-center">Cash Flow</h4>
+                        <SimplePieChart data={pieData} colors={['#10B981', '#F43F5E']} />
+                    </div>
+
+                    <h3 className="text-lg font-bold text-gray-800 px-1">Apps</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                        {[
+                            {id:'entry', l:'Entry', c:'bg-blue-500', i:I.plus},
+                            {id:'invoices', l:'Invoices', c:'bg-indigo-500', i:I.print},
+                            {id:'inventory', l:'Stock', c:'bg-orange-500', i:I.grid},
+                            {id:'loans', l:'Loans', c:'bg-purple-500', i:'<rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line>'},
+                            {id:'contacts', l:'Contacts', c:'bg-pink-500', i:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>'},
+                            {id:'staff', l:'Staff', c:'bg-yellow-500', i:'<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>'},
+                            {id:'tasks', l:'Tasks', c:'bg-emerald-500', i:'<polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>'},
+                        ].filter(m=>modules[m.id]).map(b => (
+                            <button key={b.id} onClick={()=>nav(b.id)} className="flex flex-col items-center gap-2 ios-btn">
+                                <div className={`w-14 h-14 rounded-2xl ${b.c} text-white flex items-center justify-center shadow-lg shadow-gray-200`}><Icon p={b.i}/></div>
+                                <span className="text-xs font-medium text-gray-600">{b.l}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )
+        };
+
+        // --- ADVANCED STAFF MANAGER (NEW) ---
+        const AdvancedStaffManager = ({ staff, setStaff, attendance, setAttendance, payments, setPayments }) => {
+            const [view, setView] = useState('list'); // list, attend, pay
+            
+            // Sub-States
+            const [newS, setNewS] = useState({ name:'', role:'', salary:'', type:'Daily' });
+            const [mark, setMark] = useState({ date: new Date().toISOString().split('T')[0], id:'', inTime:'', outTime:'', note:'' });
+            const [pay, setPay] = useState({ date: new Date().toISOString().split('T')[0], id:'', amt:'', type:'Salary' });
+
+            const addStaff = () => { if(newS.name){ setStaff([...staff, {id:Date.now(), ...newS}]); setNewS({name:'',role:'',salary:'',type:'Daily'}); }};
+            const delStaff = (id) => { if(confirm('Delete Staff?')) setStaff(staff.filter(s=>s.id!==id)); };
+
+            const saveAttendance = () => {
+                if(mark.id && mark.inTime) {
+                    setAttendance([...attendance, {id:Date.now(), ...mark}]);
+                    setMark({...mark, id:'', inTime:'', outTime:'', note:''});
+                    alert('Attendance Marked');
+                }
+            };
+
+            const savePayment = () => {
+                if(pay.id && pay.amt) {
+                    setPayments([...payments, {id:Date.now(), ...pay}]);
+                    setPay({...pay, id:'', amt:''});
+                    alert('Payment Recorded');
+                }
+            };
+
+            // Helper to render Tabs
+            const TabBtn = ({id, l}) => <button onClick={()=>setView(id)} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${view===id?'bg-white shadow text-yellow-600':'text-gray-500'}`}>{l}</button>;
+
+            return (
+                <div className="animate-enter space-y-4">
+                    <div className="bg-gray-100 p-1 rounded-xl flex mb-2">
+                        <TabBtn id="list" l="Staff List"/>
+                        <TabBtn id="attend" l="Attendance"/>
+                        <TabBtn id="pay" l="Payroll"/>
+                    </div>
+
+                    {view === 'list' && (
+                        <div className="space-y-4">
+                            <div className="ios-card">
+                                <h3 className="font-bold mb-3">Add New Staff</h3>
+                                <div className="space-y-3">
+                                    <input placeholder="Name" className="ios-input" value={newS.name} onChange={e=>setNewS({...newS, name:e.target.value})}/>
+                                    <div className="flex gap-2">
+                                        <input placeholder="Role (e.g. Manager)" className="ios-input" value={newS.role} onChange={e=>setNewS({...newS, role:e.target.value})}/>
+                                        <input placeholder="Salary" type="number" className="ios-input w-24" value={newS.salary} onChange={e=>setNewS({...newS, salary:e.target.value})}/>
+                                    </div>
+                                    <select className="ios-input" value={newS.type} onChange={e=>setNewS({...newS, type:e.target.value})}>
+                                        <option value="Daily">Daily Wage</option>
+                                        <option value="Monthly">Monthly Salary</option>
+                                        <option value="Hourly">Hourly</option>
+                                    </select>
+                                    <button onClick={addStaff} className="bg-yellow-500 text-white w-full py-3 rounded-xl font-bold ios-btn">Add Staff</button>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                {staff.map(s=>(
+                                    <div key={s.id} className="ios-card !p-3 flex justify-between items-center">
+                                        <div>
+                                            <div className="font-bold">{s.name}</div>
+                                            <div className="text-xs text-gray-500">{s.role} • ₹{s.salary}/{s.type}</div>
+                                        </div>
+                                        <button onClick={()=>delStaff(s.id)} className="text-red-400 p-2"><Icon p={I.trash}/></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'attend' && (
+                        <div className="space-y-4">
+                            <div className="ios-card">
+                                <h3 className="font-bold mb-3">Mark Attendance</h3>
+                                <div className="space-y-3">
+                                    <input type="date" className="ios-input" value={mark.date} onChange={e=>setMark({...mark, date:e.target.value})}/>
+                                    <select className="ios-input" value={mark.id} onChange={e=>setMark({...mark, id:e.target.value})}>
+                                        <option value="">Select Staff</option>
+                                        {staff.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div><label className="text-[10px] text-gray-500 pl-1">In Time</label><input type="time" className="ios-input" value={mark.inTime} onChange={e=>setMark({...mark, inTime:e.target.value})}/></div>
+                                        <div><label className="text-[10px] text-gray-500 pl-1">Out Time</label><input type="time" className="ios-input" value={mark.outTime} onChange={e=>setMark({...mark, outTime:e.target.value})}/></div>
+                                    </div>
+                                    <input placeholder="Work Note (Optional)" className="ios-input" value={mark.note} onChange={e=>setMark({...mark, note:e.target.value})}/>
+                                    <button onClick={saveAttendance} className="bg-black text-white w-full py-3 rounded-xl font-bold ios-btn">Save Record</button>
+                                </div>
+                            </div>
+                            <div className="ios-card">
+                                <h3 className="font-bold text-gray-800 mb-2">History</h3>
+                                <div className="space-y-2 max-h-60 overflow-y-auto">
+                                    {attendance.slice().reverse().map(a => {
+                                        const s = staff.find(x=>x.id == a.id);
+                                        if(!s) return null;
+                                        return (
+                                            <div key={a.id || Math.random()} className="p-2 border-b text-sm">
+                                                <div className="flex justify-between font-bold"><span>{s.name}</span> <span className="text-gray-500 text-xs">{a.date}</span></div>
+                                                <div className="text-xs text-gray-500 mt-1">In: {a.inTime || '-'} | Out: {a.outTime || '-'}</div>
+                                                {a.note && <div className="text-xs bg-gray-50 p-1 mt-1 rounded italic">{a.note}</div>}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'pay' && (
+                        <div className="space-y-4">
+                            <div className="ios-card">
+                                <h3 className="font-bold mb-3">Record Payment</h3>
+                                <div className="space-y-3">
+                                    <select className="ios-input" value={pay.id} onChange={e=>setPay({...pay, id:e.target.value})}>
+                                        <option value="">Select Staff</option>
+                                        {staff.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                    <div className="flex gap-2">
+                                        <input type="number" placeholder="Amount" className="ios-input" value={pay.amt} onChange={e=>setPay({...pay, amt:e.target.value})}/>
+                                        <select className="ios-input w-32" value={pay.type} onChange={e=>setPay({...pay, type:e.target.value})}>
+                                            <option>Salary</option><option>Advance</option><option>Bonus</option>
+                                        </select>
+                                    </div>
+                                    <button onClick={savePayment} className="bg-green-600 text-white w-full py-3 rounded-xl font-bold ios-btn">Pay</button>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                {staff.map(s => {
+                                    const worked = attendance.filter(a => a.id == s.id).length;
+                                    const paid = payments.filter(p => p.id == s.id).reduce((sum, p) => sum + parseFloat(p.amt), 0);
+                                    let earned = 0;
+                                    if(s.type === 'Daily') earned = worked * parseFloat(s.salary);
+                                    if(s.type === 'Monthly') earned = parseFloat(s.salary);
+                                    
+                                    const bal = earned - paid;
+                                    
+                                    return (
+                                        <div key={s.id} className="ios-card !p-3 flex justify-between items-center">
+                                            <div>
+                                                <div className="font-bold">{s.name}</div>
+                                                <div className="text-xs text-gray-500">Days Present: {worked}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-[10px] text-gray-400">Est. Balance</div>
+                                                <div className={`font-bold ${bal < 0 ? 'text-red-500' : 'text-green-600'}`}>{formatCurrency(bal)}</div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const InventoryManager = ({inventory, setInventory}) => {
+            const [form, setForm] = useState({name:'', qty:'', price:'', buyDate:'', insNum:'', insDate:''});
+            const [expanded, setExpanded] = useState(null);
+
+            const add = (e) => { 
+                e.preventDefault(); 
+                setInventory([...inventory, {id:Date.now(), ...form}]); 
+                setForm({name:'',qty:'',price:'', buyDate:'', insNum:'', insDate:''}); 
+            };
+
+            const toggle = (id) => setExpanded(expanded === id ? null : id);
+            
+            const totalStockVal = inventory.reduce((s,i) => s + ((parseFloat(i.qty)||0) * (parseFloat(i.price)||0)), 0);
+
+            return (
+                <div className="animate-enter space-y-4">
+                    <div className="ios-card bg-gradient-to-r from-orange-500 to-red-500 text-white border-none">
+                        <div className="opacity-90 text-xs font-bold uppercase mb-1">Total Stock Value</div>
+                        <div className="text-3xl font-bold">{formatCurrency(totalStockVal)}</div>
+                    </div>
+
+                    <div className="ios-card">
+                        <h3 className="font-bold text-gray-800 mb-4">Add New Item</h3>
+                        <form onSubmit={add} className="space-y-3">
+                            <input placeholder="Item Name *" className="ios-input font-medium" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/>
+                            <div className="grid grid-cols-2 gap-3">
+                                <input type="number" placeholder="Qty *" className="ios-input" value={form.qty} onChange={e=>setForm({...form,qty:e.target.value})} required/>
+                                <input type="number" placeholder="Price (₹) *" className="ios-input" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} required/>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div><label className="text-[10px] text-gray-500 pl-1">Buying Date</label><input type="date" className="ios-input" value={form.buyDate} onChange={e=>setForm({...form,buyDate:e.target.value})}/></div>
+                                <div><label className="text-[10px] text-gray-500 pl-1">Insurance Date</label><input type="date" className="ios-input" value={form.insDate} onChange={e=>setForm({...form,insDate:e.target.value})}/></div>
+                            </div>
+                            <input placeholder="Insurance Number" className="ios-input" value={form.insNum} onChange={e=>setForm({...form,insNum:e.target.value})}/>
+                            <button className="w-full bg-black text-white py-3 rounded-xl font-bold ios-btn">Add to Stock</button>
+                        </form>
+                    </div>
+
+                    <div className="space-y-3 pb-10">
+                        {inventory.map(i=>(
+                            <div key={i.id} className="ios-card !p-0 overflow-hidden">
+                                <div className="p-4 flex justify-between items-center cursor-pointer" onClick={()=>toggle(i.id)}>
+                                    <div>
+                                        <div className="font-bold text-base">{i.name}</div>
+                                        <div className="text-xs text-gray-500 mt-0.5">{i.qty} units x ₹{i.price}</div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="font-bold text-green-600">{formatCurrency((parseFloat(i.qty)||0)*(parseFloat(i.price)||0))}</div>
+                                        <div className={`transition-transform duration-200 text-gray-400 ${expanded===i.id?'rotate-180':''}`}><Icon p={I.chevronD}/></div>
+                                    </div>
+                                </div>
+                                <div className={`bg-gray-50 px-4 text-sm text-gray-600 details-content ${expanded===i.id ? 'details-open py-4 border-t' : ''}`}>
+                                    <div className="grid grid-cols-2 gap-y-2">
+                                        <div><span className="text-xs text-gray-400 block">Buy Date</span>{i.buyDate || '-'}</div>
+                                        <div><span className="text-xs text-gray-400 block">Insurance No</span>{i.insNum || '-'}</div>
+                                        <div><span className="text-xs text-gray-400 block">Ins. Date</span>{i.insDate || '-'}</div>
+                                    </div>
+                                    <div className="mt-4 pt-3 border-t border-gray-200 flex justify-end">
+                                        <button onClick={(e)=>{e.stopPropagation(); if(confirm('Delete?')) setInventory(inventory.filter(x=>x.id!==i.id))}} className="text-red-500 text-xs font-bold flex items-center gap-1 bg-white border border-red-100 px-3 py-1.5 rounded-lg"><Icon p={I.trash} c="w-3 h-3"/> Delete Item</button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {inventory.length === 0 && <div className="text-center text-gray-400 py-10">No items available.</div>}
+                    </div>
+                </div>
+            );
+        };
+
+        const InvoiceManager = ({ invoices, setInvoices, company, contacts, items, setItems }) => {
+            const [mode, setMode] = useState('list');
+            const [printInv, setPrintInv] = useState(null);
+            
+            const [inv, setInv] = useState({ client:'', date: new Date().toISOString().split('T')[0], items: [] });
+            const [line, setLine] = useState({ desc:'', qty:1, price:0 });
+            
+            const addItem = () => { if(line.desc){ setInv({...inv, items:[...inv.items, line]}); setLine({desc:'', qty:1, price:0}); }};
+            const save = () => { 
+                if(inv.client && inv.items.length){
+                    const total = inv.items.reduce((s,i)=>s+(i.qty*i.price),0);
+                    setInvoices([{id:Date.now(), ...inv, total}, ...invoices]);
+                    setMode('list'); setInv({client:'', date: new Date().toISOString().split('T')[0], items:[]});
+                }
+            };
+
+            const openPrint = (i) => { setPrintInv(i); setMode('preview'); };
+
+            if(mode === 'preview' && printInv) return (
+                <div className="fixed inset-0 z-50 bg-gray-900/50 flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-2xl h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-enter">
+                        <div className="p-4 bg-gray-50 border-b flex justify-between items-center no-print">
+                            <h3 className="font-bold">Preview</h3>
+                            <div className="flex gap-2">
+                                <button onClick={()=>setMode('list')} className="px-4 py-2 bg-gray-200 rounded-xl font-bold text-sm">Close</button>
+                                <button onClick={()=>window.print()} className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-200">Print</button>
+                            </div>
+                        </div>
+                        {/* Printable Content */}
+                        <div id="print-preview-modal" className="flex-1 overflow-y-auto p-10 text-black bg-white">
+                            <div className="flex justify-between items-start border-b-2 border-black pb-4 mb-6">
+                                <div>
+                                    <h1 className="text-3xl font-bold uppercase">{company.name}</h1>
+                                    <p className="text-sm mt-1 whitespace-pre-line text-gray-600">{company.address}</p>
+                                    <p className="text-sm text-gray-600">Ph: {company.phone}</p>
+                                </div>
+                                <div className="text-right">
+                                    <h2 className="text-4xl font-light text-gray-300">INVOICE</h2>
+                                    <p className="font-bold">#{printInv.id.toString().slice(-4)}</p>
+                                    <p className="text-sm">{printInv.date}</p>
+                                </div>
+                            </div>
+                            <div className="mb-8">
+                                <p className="text-xs font-bold text-gray-400 uppercase">Bill To</p>
+                                <h3 className="text-xl font-bold">{printInv.client}</h3>
+                            </div>
+                            <table className="w-full mb-8 border-collapse">
+                                <thead><tr className="border-b-2 border-black text-sm uppercase"><th className="py-2 text-left">Item</th><th className="py-2 text-right">Qty</th><th className="py-2 text-right">Price</th><th className="py-2 text-right">Total</th></tr></thead>
+                                <tbody>
+                                    {printInv.items.map((i,x)=>(
+                                        <tr key={x} className="border-b border-gray-200 text-sm">
+                                            <td className="py-2">{i.desc}</td><td className="py-2 text-right">{i.qty}</td><td className="py-2 text-right">{i.price}</td><td className="py-2 text-right font-bold">{formatCurrency(i.qty*i.price)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div className="text-right text-2xl font-bold border-t-2 border-black pt-4">Total: {formatCurrency(printInv.total)}</div>
+                            <div className="mt-20 flex justify-between items-end">
+                                <div className="text-xs text-gray-400">Thank you!</div>
+                                <div className="text-center"><div className="w-40 border-b border-black mb-1"></div><div className="text-xs font-bold">Authorized Signature</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="animate-enter space-y-4">
+                    {mode === 'list' ? (
+                        <div className="ios-card">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-lg">Invoices</h3>
+                                <button onClick={()=>setMode('create')} className="bg-blue-100 text-blue-600 p-2 rounded-xl"><Icon p={I.plus}/></button>
+                            </div>
+                            <div className="space-y-3">
+                                {invoices.map(i=>(
+                                    <div key={i.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                                        <div><div className="font-bold">{i.client}</div><div className="text-xs text-gray-500">{i.date} • #{i.id.toString().slice(-4)}</div></div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-bold text-gray-700">{formatCurrency(i.total)}</span>
+                                            <button onClick={()=>openPrint(i)} className="bg-white p-2 rounded-lg shadow-sm border"><Icon p={I.print}/></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="ios-card">
+                            <div className="flex justify-between items-center mb-4"><h3 className="font-bold">New Invoice</h3><button onClick={()=>setMode('list')} className="text-red-500 text-sm font-bold">Cancel</button></div>
+                            <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <input placeholder="Client" list="contacts" className="ios-input" value={inv.client} onChange={e=>setInv({...inv, client:e.target.value})}/>
+                                    <datalist id="contacts">{contacts.map(c=><option key={c.id} value={c.name}/>)}</datalist>
+                                    <input type="date" className="ios-input" value={inv.date} onChange={e=>setInv({...inv, date:e.target.value})}/>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-xl space-y-2 border">
+                                    <div className="flex gap-2">
+                                        <input placeholder="Item Description" list="items" className="ios-input flex-1" value={line.desc} onChange={e=>{
+                                            const val=e.target.value; const f=items.find(x=>x.name===val);
+                                            setLine({...line, desc:val, price:f?f.price:line.price});
+                                        }}/>
+                                        <datalist id="items">{items.map(i=><option key={i.id} value={i.name}/>)}</datalist>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input type="number" placeholder="Qty" className="ios-input w-20" value={line.qty} onChange={e=>setLine({...line, qty:e.target.value})}/>
+                                        <input type="number" placeholder="Price" className="ios-input w-24" value={line.price} onChange={e=>setLine({...line, price:e.target.value})}/>
+                                        <button onClick={addItem} className="bg-black text-white px-4 rounded-xl font-bold">Add</button>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    {inv.items.map((x,i)=><div key={i} className="flex justify-between text-sm px-2"><span>{x.desc} x {x.qty}</span><span className="font-mono">{formatCurrency(x.qty*x.price)}</span></div>)}
+                                    <div className="border-t pt-2 mt-2 flex justify-between font-bold text-lg"><span>Total</span><span>{formatCurrency(inv.items.reduce((s,x)=>s+(x.qty*x.price),0))}</span></div>
+                                </div>
+                                <button onClick={save} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-200 ios-btn">Create Invoice</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const EntryManager = ({ txns, setTxns, cats, projects }) => {
+            const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], type:'exp', cat:'', proj:'General', amt:'' });
+            const [editId, setEditId] = useState(null);
+            const save = (e) => { e.preventDefault(); if(editId) { setTxns(txns.map(t => t.id === editId ? { ...form, id: editId } : t)); setEditId(null); } else { setTxns([{id:Date.now(), ...form}, ...txns]); } setForm({ ...form, amt:'' }); };
+            const edit = (t) => { setForm(t); setEditId(t.id); };
+            const del = (id) => { if(confirm("Delete?")) setTxns(txns.filter(t=>t.id!==id)); };
+            return (<div className="animate-enter space-y-4"><div className="ios-card"><div className="flex bg-gray-100 p-1 rounded-xl mb-4"><button onClick={()=>setForm({...form, type:'inc'})} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${form.type==='inc'?'bg-white shadow text-green-600':'text-gray-500'}`}>Income</button><button onClick={()=>setForm({...form, type:'exp'})} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${form.type==='exp'?'bg-white shadow text-red-600':'text-gray-500'}`}>Expense</button></div><form onSubmit={save} className="space-y-3"><div className="grid grid-cols-2 gap-3"><input type="date" className="ios-input" value={form.date} onChange={e=>setForm({...form, date:e.target.value})}/><input type="number" placeholder="Amount" className="ios-input font-bold" value={form.amt} onChange={e=>setForm({...form, amt:e.target.value})} required/></div><select className="ios-input" value={form.cat} onChange={e=>setForm({...form, cat:e.target.value})} required><option value="">Category</option>{(form.type==='inc'?cats.inc:cats.exp).map(c=><option key={c} value={c}>{c}</option>)}</select><select className="ios-input" value={form.proj} onChange={e=>setForm({...form, proj:e.target.value})}>{projects.map(p=><option key={p} value={p}>{p}</option>)}</select><button className={`w-full py-3 rounded-xl font-bold text-white shadow-lg ios-btn ${form.type==='inc'?'bg-green-500 shadow-green-200':'bg-red-500 shadow-red-200'}`}>{editId?'Update':'Save'}</button></form></div><div className="ios-card"><h3 className="font-bold text-gray-800 mb-3">Recent Transactions</h3><div className="space-y-3 max-h-[400px] overflow-y-auto">{txns.map(t => (<div key={t.id} className="flex justify-between items-center p-3 rounded-xl bg-gray-50 border border-gray-100"><div><div className="font-bold text-sm">{t.cat}</div><div className="text-[10px] text-gray-400">{t.date} • {t.proj}</div></div><div className="flex items-center gap-3"><span className={`font-bold ${t.type==='inc'?'text-green-600':'text-red-600'}`}>{t.type==='inc'?'+':'-'} {t.amt}</span><button onClick={()=>edit(t)} className="text-blue-500"><Icon p={I.edit} c="w-4 h-4"/></button><button onClick={()=>del(t.id)} className="text-gray-400"><Icon p={I.trash} c="w-4 h-4"/></button></div></div>))}</div></div></div>);
+        };
+
+        const SettingsManager = ({ company, setCompany, projects, setProjects, cats, setCats, modules, setModules, fullData }) => {
+            const [tab, setTab] = useState('company'); const [val, setVal] = useState('');
+            const addProj = () => { if(val){ setProjects([...projects, val]); setVal(''); }};
+            const addCat = (t) => { if(val){ setCats({...cats, [t]:[...cats[t], val]}); setVal(''); }};
+            const delCat = (t, i) => { setCats({...cats, [t]: cats[t].filter((_,x)=>x!==i)}); };
+            const delProj = (i) => setProjects(projects.filter((_,x)=>x!==i));
+            const downloadBackup = () => { const ws = XLSX.utils.json_to_sheet(fullData.txns); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Transactions"); XLSX.writeFile(wb, "Backup.xlsx"); };
+            const NavBtn = ({id, label}) => <button onClick={()=>setTab(id)} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${tab===id?'bg-black text-white':'bg-gray-100 text-gray-600'}`}>{label}</button>;
+            return (<div className="animate-enter"><div className="flex overflow-x-auto gap-2 mb-4 pb-1 hide-scroll"><NavBtn id="company" label="Company"/><NavBtn id="projects" label="Projects"/><NavBtn id="cats" label="Categories"/><NavBtn id="modules" label="Modules"/><NavBtn id="data" label="Data"/></div><div className="ios-card">{tab==='company'&&( <div className="space-y-3"><h3 className="font-bold mb-2">Business Details</h3><input className="ios-input" placeholder="Company Name" value={company.name} onChange={e=>setCompany({...company, name:e.target.value})}/><textarea className="ios-input" rows="3" placeholder="Address" value={company.address} onChange={e=>setCompany({...company, address:e.target.value})}/><input className="ios-input" placeholder="Phone" value={company.phone} onChange={e=>setCompany({...company, phone:e.target.value})}/></div> )}{tab==='projects'&&( <div><div className="flex gap-2 mb-4"><input className="ios-input" placeholder="New Project" value={val} onChange={e=>setVal(e.target.value)}/><button onClick={addProj} className="bg-black text-white px-4 rounded-xl font-bold">Add</button></div><div className="space-y-2">{projects.map((p,i)=><div key={i} className="flex justify-between p-3 bg-gray-50 rounded-xl font-medium">{p}<button onClick={()=>delProj(i)} className="text-red-500"><Icon p={I.trash}/></button></div>)}</div></div> )}{tab==='cats'&&( <div className="space-y-6"><div><div className="flex justify-between items-center mb-2"><h4 className="font-bold text-sm text-green-600">Income Categories</h4><div className="flex gap-2"><input className="bg-gray-100 p-1 rounded text-sm w-24" id="newInc"/><button onClick={()=>{setVal(document.getElementById('newInc').value); addCat('inc'); document.getElementById('newInc').value=''}} className="text-xs bg-green-100 text-green-700 px-2 rounded">Add</button></div></div><div className="flex flex-wrap gap-2">{cats.inc.map((c,i)=><span key={i} className="bg-green-50 text-green-800 px-3 py-1 rounded-full text-xs font-bold border border-green-100 flex items-center gap-1">{c}<button onClick={()=>delCat('inc',i)}>×</button></span>)}</div></div><div><div className="flex justify-between items-center mb-2"><h4 className="font-bold text-sm text-red-600">Expense Categories</h4><div className="flex gap-2"><input className="bg-gray-100 p-1 rounded text-sm w-24" id="newExp"/><button onClick={()=>{setVal(document.getElementById('newExp').value); addCat('exp'); document.getElementById('newExp').value=''}} className="text-xs bg-red-100 text-red-700 px-2 rounded">Add</button></div></div><div className="flex flex-wrap gap-2">{cats.exp.map((c,i)=><span key={i} className="bg-red-50 text-red-800 px-3 py-1 rounded-full text-xs font-bold border border-red-100 flex items-center gap-1">{c}<button onClick={()=>delCat('exp',i)}>×</button></span>)}</div></div></div> )}{tab==='modules'&&( <div className="grid grid-cols-2 gap-3">{Object.keys(modules).map(k=>(<label key={k} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${modules[k]?'border-blue-500 bg-blue-50':'border-transparent bg-gray-50'}`}><input type="checkbox" checked={modules[k]} onChange={()=>setModules({...modules, [k]:!modules[k]})} className="hidden"/><span className="capitalize font-bold text-sm">{k}</span></label>))}</div> )}{tab==='data'&&( <div className="text-center py-6"><div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500"><Icon p={I.download} c="w-8 h-8"/></div><h3 className="font-bold text-lg mb-1">Backup Data</h3><p className="text-gray-500 text-xs mb-4">Download all records as Excel file</p><button onClick={downloadBackup} className="bg-black text-white px-6 py-3 rounded-xl font-bold shadow-lg ios-btn">Download .xlsx</button></div> )}</div></div>);
+        };
+
+        const LoanManager = ({loans, setLoans, contacts}) => {
+            const [form, setForm] = useState({name:'', amount:'', type:'Given'});
+            const add = (e) => { e.preventDefault(); setLoans([...loans, {id:Date.now(), ...form, paid:0}]); setForm({...form, amount:''}); };
+            return (<div className="animate-enter"><div className="ios-card"><div className="flex justify-between mb-4"><h3 className="font-bold">Loans</h3></div><form onSubmit={add} className="flex gap-2 mb-4 flex-wrap"><input placeholder="Person" list="cnt" className="ios-input flex-1 min-w-[120px]" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/><datalist id="cnt">{contacts.map(c=><option key={c.id} value={c.name}/>)}</datalist><input type="number" placeholder="Amt" className="ios-input w-24" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})}/><select className="ios-input w-24" value={form.type} onChange={e=>setForm({...form,type:e.target.value})}><option value="Given">Given</option><option value="Taken">Taken</option></select><button className="bg-purple-600 text-white px-4 rounded-xl font-bold w-full sm:w-auto">Save</button></form><div className="space-y-2">{loans.map(l=>{const bal=l.amount-(l.paid||0); if(bal<=0) return null; return(<div key={l.id} className="p-3 bg-gray-50 rounded-xl flex justify-between items-center"><div><div className="font-bold text-sm">{l.name} <span className={`text-[10px] px-1 rounded ${l.type==='Given'?'bg-red-100 text-red-700':'bg-green-100 text-green-700'}`}>{l.type}</span></div><div className="text-xs text-gray-500">Bal: {bal} / {l.amount}</div></div><button onClick={()=>{const p=prompt('Pay amount'); if(p) setLoans(loans.map(x=>x.id===l.id?{...x, paid:(x.paid||0)+parseFloat(p)}:x))}} className="text-xs bg-white border px-3 py-1 rounded-lg font-bold text-blue-600 shadow-sm">Pay</button></div>)})}</div></div></div>);
+        };
+
+        const ContactManager = ({contacts, setContacts}) => { 
+            const [f, sF] = useState({name:'',phone:''}); const [search, setSearch] = useState('');
+            const filtered = contacts.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search));
+            return (<div className="animate-enter"><div className="ios-card"><form onSubmit={(e)=>{e.preventDefault(); setContacts([...contacts,{id:Date.now(),...f}]); sF({name:'',phone:''})}} className="flex gap-2 mb-4"><input placeholder="Name" className="ios-input" value={f.name} onChange={e=>sF({...f,name:e.target.value})}/><input placeholder="Phone" className="ios-input w-32" value={f.phone} onChange={e=>sF({...f,phone:e.target.value})}/><button className="bg-pink-500 text-white px-4 rounded-xl">+</button></form><input placeholder="Search..." className="ios-input mb-3 bg-gray-100" value={search} onChange={e=>setSearch(e.target.value)}/><div className="space-y-2 max-h-[50vh] overflow-y-auto">{filtered.map(c=>(<div key={c.id} className="flex justify-between p-3 bg-gray-50 rounded-xl"><div><div className="font-bold">{c.name}</div><div className="text-xs text-gray-500">{c.phone}</div></div><button onClick={()=>setContacts(contacts.filter(x=>x.id!==c.id))} className="text-gray-400"><Icon p={I.trash}/></button></div>))}</div></div></div>);
+        };
+
+        const TaskManager = ({tasks, setTasks}) => { const [t, sT] = useState(''); return (<div className="animate-enter"><div className="ios-card"><div className="flex gap-2 mb-4"><input className="ios-input" placeholder="New Task" value={t} onChange={e=>sT(e.target.value)}/><button onClick={()=>{if(t){setTasks([...tasks,{id:Date.now(),t,d:false}]); sT('')}}} className="bg-emerald-500 text-white px-4 rounded-xl font-bold">+</button></div><div className="space-y-2">{tasks.sort((a,b)=>a.d-b.d).map(x=>(<div key={x.id} className={`p-3 rounded-xl flex items-center gap-3 transition-all ${x.d?'bg-gray-100 opacity-50':'bg-white border'}`}><input type="checkbox" checked={x.d} onChange={()=>setTasks(tasks.map(k=>k.id===x.id?{...k,d:!k.d}:k))} className="w-5 h-5 rounded-md accent-emerald-500"/><span className={x.d?'line-through':''}>{x.t}</span></div>))}</div></div></div>)};
+        const StaffManager = ({staff, setStaff}) => { const [n, sN] = useState(''); return (<div className="animate-enter"><div className="ios-card"><div className="flex gap-2 mb-4"><input placeholder="Staff Name" className="ios-input" value={n} onChange={e=>sN(e.target.value)}/><button onClick={()=>{setStaff([...staff,{id:Date.now(),name:n}]); sN('')}} className="bg-yellow-500 text-white px-4 rounded-xl">Add</button></div><div className="space-y-2">{staff.map(s=>(<div key={s.id} className="p-3 bg-gray-50 rounded-xl font-bold text-gray-700">{s.name}</div>))}</div></div></div>)};
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
 </body>
 </html>
-
-
